@@ -1,0 +1,46 @@
+<div class="is-center text-uppercase" style="padding: 35px; font-size: 3rem">
+  authorize access to presonal information
+</div>
+
+<p class="card bg-error" style="padding:15px">
+  ⚠️&nbsp;&nbsp;Are you sure you want to allow «{{.user.Provider.Meta.Subject}}» access your profile information?<br>
+  You could see information that will be shared below.
+</p>
+
+<div class="card">
+  <table class="striped">
+    <tbody>
+      {{range $k, $v := .user}}
+      <tr><td>{{$v.Key}}</td><td>{{$v.Value}}</td></tr>
+      {{end}}
+    </tbody>
+  </table>
+
+  <footer>
+    <div class="row">
+      <div class="col">
+	      <div class="is-left">
+	        <a href="{{.paths.status}}"
+	           title="go to status page"
+	           class="button"
+	           style="font-size: 1.8rem">Profile</a>
+	      </div>
+      </div>
+      <div class="col">
+	      <div class="is-right">
+	        <form method="post" action="{{csrf $.URL}}">
+	          <a href="{{.paths.root}}"
+	             title="go to main page"
+	             class="button error"
+	             style="font-size: 1.8rem">Decline</a>
+
+	          <button type="submit"
+		                title="proceed with {{.user.Provider.Meta.Subject}} using current session"
+		                class="button success primary"
+		                style="font-size: 1.8rem">Accept</button>
+	        </form>
+	      </div>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,49 @@
+* DONE template to intercept errors
+need a template to intercept errors like "internal server error" and show them
+this could be a feature of the existing gdk middleware named "recover"
+* DONE attach base templates
+like document (container) page and index page which list connectors
+* DONE send headers with user information
+make this behaviour configurable
+* DONE reimplement retpath
+* DONE consistent rules to validate retpaths
+* DONE validate user profiles
+* TODO more granular error codes
+we can send 500 http code for each error, but want to have 400 and other as well
+which should depend on the recover error type
+* DONE reimplement reverse proxy support
+* TODO support multiple proxy inside one process
+not sure we need this, but this was a feature we have in the past, why not support this?
+* TODO proxy virtual hosts support
+  to support multiple servers inside one process
+  hierarchy: listener -> []hostnames
+* TODO granular restrictions
+  support granulare restrictions on user profile information (rules?)
+  like =mail should match regexp .+@example\.com=
+  best option is to make it possible to define this rules
+  for each user profile field
+
+* TODO implement some sort of "mode"?
+- reverse proxy mode
+- nginx auth responder mode
+- auth provider mode
+- ...?
+
+* TODO configurable header names
+* TODO providers as plugins
+  extend providers registry without codebase modifications
+  (go plugins)
+
+  or use grpc + sdk approach (something like terraform uses, but make it waaaay simplier)
+
+* TODO contexts support for cancelation & timeouts
+* TODO slack refresh tokens
+  have no clue how the fuck it should be implemented, docs are outdated and unclear
+
+* TODO implement identity provider
+  - [~] OAuth2
+  - [ ] SAML
+
+* TODO a way to run connector code on signout
+signout for basic auth is not consistent
+(you sould sign in after sign out without entering a password)

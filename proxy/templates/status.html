@@ -1,0 +1,53 @@
+{{if .userProfile}}
+<div class="is-center text-uppercase" style="padding: 35px; font-size: 3rem;">
+  auth status
+</div>
+
+<div class="card">
+  <table class="striped">
+    <tbody>
+      <tr>
+        {{$userProfileMap := .userProfile.MapInterface}}
+        {{$userProfileMapKeys := keys $userProfileMap | sortAlpha | reverse}}
+        {{if (get $userProfileMap "avatar-url")}}
+        <td style="width: 230px;"><img src="{{get $userProfileMap "avatar-url"}}"/></td>
+        {{end}}
+        <td>
+          <table class="stripped">
+            <tbody>
+              {{range $k := $userProfileMapKeys}}
+              {{$v := get $userProfileMap $k}}
+              <tr>
+                <td>{{$k}}</td>
+                <td style="text-overflow: ellipsis;">{{if $v}}
+                  {{if or (hasPrefix "http://" $v) (hasPrefix "https://" $v)}}
+                  <a href="{{$v}}">{{$v}}</a>
+                  {{else}}{{$v}}{{end}}{{else}}—{{end}}
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <details style="margin-bottom: 16px; margin-top: 16px;">
+    <summary>Session dump</summary>
+    <pre>{{ toPrettyJson .session }}</pre>
+  </details>
+  <footer class="is-right">
+    <form method="post" action="{{$.paths.signout}}">
+      <input type="hidden" name="csrf" value="{{csrf $.session $.paths.signout}}"/>
+      <a href="{{$.paths.root}}" class="button primary">Main Page</a>&nbsp;<button type="submit" class="button primary">Sign Out</button>
+    </form>
+  </footer>
+</div>
+{{else}}
+<div class="is-center text-uppercase" style="padding: 35px; font-size: 3rem;">
+  not signed in
+</div>
+<div class="is-center">
+  <a href="{{$.paths.signin}}" class="button primary">Sign In</a>
+</div>
+{{end}}

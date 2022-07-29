@@ -1,0 +1,89 @@
+http:
+  address: localhost:8080
+  metrics:
+    enable: true
+    token: aaaaaaaa
+  session:
+    enable: true
+    container:
+      ## secretbox is default
+      type: jwt
+      # secretbox:
+      #   key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      jwt:
+        algorithm: hs256
+        key: aaaaaaaa
+    # validator:
+    #   refresh: 5s
+  proxy:
+    enable: true
+    upstreams:
+      default: "http://127.0.0.1:8082"
+  csrf:
+    enable: true
+    validator:
+      enable: false
+    container:
+      secretbox:
+        key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+proxy:
+  prefix: "/auth"
+  user:
+    retpath:
+      rules:
+        - type: "regexp"
+          expr: "^/.+$"
+    profile:
+      rules:
+        - type: "regexp"
+          key: "mail"
+          expr: "^[^@]+@corpix\\.ru$"
+      headers:
+        enable: true
+        map:
+          # NOTE: empty value removes header from headers list
+          connector: ""
+          display-name: ""
+          avatar-url: ""
+
+  # providers:
+  #   enable: ["oauth"]
+  #   oauth:
+  #     applications:
+  #       - name: "app"
+  #         client-id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  #         client-key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  #         redirect-uri: ["https://localhost/oauth2/callback"]
+  connectors:
+    enable: ["basic"]
+    # slack:
+    #   oauth:
+    #     client-id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    #     client-key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    #     redirect-url: "https://localhost/goetia/connector/slack/callback"
+    # oidc:
+    #   label: "keycloak"
+    #   oauth:
+    #     auth-url: "https://keycloak/auth/realms/master/protocol/openid-connect/auth"
+    #     token-url: "https://keycloak/auth/realms/master/protocol/openid-connect/token"
+    #     client-id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    #     client-key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    #     redirect-url: "https://localhost/goetia/connector/oidc/callback"
+    #   user-mappings:
+    #     email: "mail"
+    #     groups: "groups"
+    #     name: "displayName"
+    #     preferred_username: "name"
+    #   user-url: "https://keycloak/auth/realms/master/protocol/openid-connect/userinfo"
+    basic:
+      users:
+        corpix:
+          password: "qwerty"
+          # password-file: ...
+          mail: "me@corpix.ru"
+          groups: ["admin", "owner"]
+          display-name: "Dmitry Moskowski"
+          avatar-url: "https://avatars.githubusercontent.com/u/747362"
+    # bypass:
+    #   label: "bypass proxy auth"

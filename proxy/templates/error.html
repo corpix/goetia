@@ -1,0 +1,15 @@
+<div class="is-center text-uppercase" style="padding: 35px; font-size: 3rem">
+  an error occurred
+</div>
+
+<div class="error card">
+  <div class="text-center" style="padding: 15px">
+    {{.error}}
+    <hr/>
+    <div class="text-grey">request id <i>{{.requestId}}</i></div>
+  </div>
+
+  <footer class="is-right">
+    <a href="{{.paths.status}}" class="button primary">Status Page</a>
+  </footer>
+</div>

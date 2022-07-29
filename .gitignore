@@ -1,0 +1,12 @@
+.personal.*
+/build
+/main
+/.env
+/.cache/*
+/.config/*
+/.local/*
+*.prof
+*.pid
+/.tmux
+.cookie-jar
+*.config.yml
