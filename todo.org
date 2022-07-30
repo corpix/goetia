@@ -11,6 +11,8 @@ make this behaviour configurable
 * TODO more granular error codes
 we can send 500 http code for each error, but want to have 400 and other as well
 which should depend on the recover error type
+* TODO oauth2 provider
+basic oauth2 flow to allow other applications to authenticate against goetia
 * TODO global event bus
 event such as "signout" or "signin" should be global
 any event could be handled by connector/provider/anybody else
