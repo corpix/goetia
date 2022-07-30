@@ -11,6 +11,14 @@ make this behaviour configurable
 * TODO more granular error codes
 we can send 500 http code for each error, but want to have 400 and other as well
 which should depend on the recover error type
+* TODO global event bus
+event such as "signout" or "signin" should be global
+any event could be handled by connector/provider/anybody else
+all of this as part of the request/response flow
+this will allow us to implement an audit log
+and some other features
+like connector/provider token refreshes
+or signout clean up on the connector side
 * DONE reimplement reverse proxy support
 * TODO support multiple proxy inside one process
 not sure we need this, but this was a feature we have in the past, why not support this?
