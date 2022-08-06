@@ -2,7 +2,10 @@ module github.com/corpix/goetia
 
 go 1.17
 
-require github.com/corpix/gdk v0.0.0-20220728154109-5df971083e7d
+require (
+	github.com/corpix/gdk v0.0.0-20220806144353-85ab6e9e8725
+	github.com/davecgh/go-spew v1.1.1
+)
 
 replace gopkg.in/yaml.v2 v2.4.0 => github.com/corpix/yaml v0.0.0-20220706182535-91862f77ddd0
 
@@ -18,9 +21,9 @@ require (
 	github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/cristalhq/jwt/v4 v4.0.1 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
+	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -37,6 +40,10 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
+	github.com/philippgille/gokv v0.6.0 // indirect
+	github.com/philippgille/gokv/encoding v0.0.0-20191011213304-eb77f15b9c61 // indirect
+	github.com/philippgille/gokv/redis v0.6.0 // indirect
+	github.com/philippgille/gokv/util v0.0.0-20191011213304-eb77f15b9c61 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect

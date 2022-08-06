@@ -42,8 +42,9 @@ type (
 	}
 
 	ProvidersConfig struct {
-		Enable []string `yaml:"enable"`
-		// Oauth  *ProviderOauthConfig `yaml:"oauth"`
+		Enable []string             `yaml:"enable"`
+		Oauth  *ProviderOauthConfig `yaml:"oauth"`
+		Oidc   *ProviderOidcConfig  `yaml:"oidc"`
 	}
 	ProviderName string
 	Provider     interface {
@@ -51,6 +52,11 @@ type (
 		Label() string
 		Description() string
 		Mount(*http.Router)
+	}
+
+	KeyValue interface {
+		Get(key string) string
+		Set(key string, value string)
 	}
 )
 
@@ -76,7 +82,8 @@ const (
 	ConnectorNameBasic ConnectorName = "basic"
 	// ConnectorNameBypass ConnectorName = "bypass"
 
-	// ProviderNameOauth ProviderName = "oauth"
+	ProviderNameOauth ProviderName = "oauth"
+	ProviderNameOidc  ProviderName = "oidc"
 )
 
 var (
@@ -93,10 +100,12 @@ var (
 	// _ Connector = &ConnectorBypass{}
 
 	ProviderNames = map[string]struct{}{
-		// string(ProviderNameOauth): {},
+		string(ProviderNameOauth): {},
+		string(ProviderNameOidc):  {},
 	}
 
-	// _ Provider = &ProviderOauth{}
+	_ Provider = &ProviderOauth{}
+	_ Provider = &ProviderOidc{}
 
 	ErrAuthorizationRequired = errors.New("authorization required")
 )
@@ -167,10 +176,12 @@ func (c *ProvidersConfig) Default() {
 		enabled[ProviderName(strings.ToLower(k))] = true
 	}
 
-	// if c.Oauth == nil && enabled[ProviderNameOauth] {
-	// 	c.Oauth = &ProviderOauthConfig{}
-	// }
-
+	if c.Oauth == nil && enabled[ProviderNameOauth] {
+		c.Oauth = &ProviderOauthConfig{}
+	}
+	if c.Oidc == nil && enabled[ProviderNameOidc] {
+		c.Oidc = &ProviderOidcConfig{}
+	}
 }
 
 func (c *ProvidersConfig) Validate() error {
@@ -189,39 +200,43 @@ func (c *ProvidersConfig) Validate() error {
 	return nil
 }
 
-func NewConnectors(c *ConnectorsConfig, p Paths) []Connector {
+func NewConnectors(c *ConnectorsConfig) []Connector {
 	connectors := make([]Connector, len(c.Enable))
 	for n, name := range c.Enable {
 		switch ConnectorName(name) {
 		// case ConnectorNameSlack:
 		// case ConnectorNameOidc:
 		case ConnectorNameBasic:
-			connectors[n] = NewConnectorBasic(c.Basic, p)
+			connectors[n] = NewConnectorBasic(c.Basic)
 			// case ConnectorNameBypass:
 		}
 	}
 	return connectors
 }
 
-func NewProviders(c *ProvidersConfig, p Paths) []Provider {
+func NewProviders(c *ProvidersConfig) []Provider {
 	providers := make([]Provider, len(c.Enable))
 	for n, name := range c.Enable {
 		_ = n
 		switch ProviderName(name) {
-		// case ProviderNameOauth:
-		//   providers[n] = NewProviderOauth(c.Oauth, p)
+		case ProviderNameOauth:
+			providers[n] = NewProviderOauth(c.Oauth)
+		case ProviderNameOidc:
+			providers[n] = NewProviderOidc(c.Oidc)
 		}
 	}
 	return providers
 }
 
-func ErrorHandlerCtr(t *template.Template) http.RecoverHandler {
+func ErrorHandlerCtr(t *template.Template, ps Paths) http.RecoverHandler {
 	errTemplate := t.Lookup(string(TemplateNameError))
+	paths := ps.TemplateContext()
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		TemplateResponse(
 			errTemplate,
 			http.
 				NewTemplateContext(r).
+				With(TemplateContextKeyPaths, paths).
 				With(TemplateContextKeyError, err.Error()),
 			w,
 		)
@@ -249,12 +264,18 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 
 	di.MustProvide(di.Default, func() UserProfileRetpathRules { return retpathRules })
 	di.MustProvide(di.Default, func() UserProfileRules { return userProfileRules })
+	di.MustProvide(di.Default, func() Paths { return paths })
 
 	//
 
-	connectors := NewConnectors(conf.Connectors, paths)
+	connectors := NewConnectors(conf.Connectors)
 	for _, connector := range connectors {
-		connector.Mount(r)
+		connector.Mount(r.PathPrefix(PathConnectors + "/" + connector.Name()).Subrouter())
+	}
+
+	providers := NewProviders(conf.Providers)
+	for _, provider := range providers {
+		provider.Mount(r.PathPrefix(PathProviders + "/" + provider.Name()).Subrouter())
 	}
 
 	//
@@ -321,7 +342,8 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 					With(TemplateContextKeySession, session).
 					With(TemplateContextKeyUserProfile, SessionUserProfileGet(session)).
 					With(TemplateContextKeyPaths, templatePaths).
-					With(TemplateContextKeyConnectors, connectors),
+					With(TemplateContextKeyConnectors, connectors).
+					With(TemplateContextKeyProviders, providers),
 				w,
 			)
 		}).

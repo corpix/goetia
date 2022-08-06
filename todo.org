@@ -8,11 +8,18 @@ make this behaviour configurable
 * DONE reimplement retpath
 * DONE consistent rules to validate retpaths
 * DONE validate user profiles
+* DONE reimplement reverse proxy support
+* DONE oauth2 per-application profile remap rules
+* DONE oauth2 provider
+basic oauth2 flow to allow other applications to authenticate against goetia
+* TODO test oauth2 provider with goth client
+need an automated test so we could test at most some parts of the flow (authorize -> code -> access token -> profile)
 * TODO more granular error codes
 we can send 500 http code for each error, but want to have 400 and other as well
 which should depend on the recover error type
-* TODO oauth2 provider
-basic oauth2 flow to allow other applications to authenticate against goetia
+should clean up all panics from code or better - cover all f them with correct types so we could handle them
+maybe GDK requres some basic error type we could use
+* TODO per-application profile validation rules
 * TODO global event bus
 event such as "signout" or "signin" should be global
 any event could be handled by connector/provider/anybody else
@@ -21,7 +28,6 @@ this will allow us to implement an audit log
 and some other features
 like connector/provider token refreshes
 or signout clean up on the connector side
-* DONE reimplement reverse proxy support
 * TODO support multiple proxy inside one process
 not sure we need this, but this was a feature we have in the past, why not support this?
 * TODO proxy virtual hosts support

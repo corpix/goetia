@@ -4,37 +4,10 @@
 </div>
 
 <div class="card">
-  <table class="striped">
-    <tbody>
-      <tr>
-        {{$userProfileMap := .userProfile.MapInterface}}
-        {{$userProfileMapKeys := keys $userProfileMap | sortAlpha | reverse}}
-        {{if (get $userProfileMap "avatar-url")}}
-        <td style="width: 230px;"><img src="{{get $userProfileMap "avatar-url"}}"/></td>
-        {{end}}
-        <td>
-          <table class="stripped">
-            <tbody>
-              {{range $k := $userProfileMapKeys}}
-              {{$v := get $userProfileMap $k}}
-              <tr>
-                <td>{{$k}}</td>
-                <td style="text-overflow: ellipsis;">{{if $v}}
-                  {{if or (hasPrefix "http://" $v) (hasPrefix "https://" $v)}}
-                  <a href="{{$v}}">{{$v}}</a>
-                  {{else}}{{$v}}{{end}}{{else}}—{{end}}
-                </td>
-              </tr>
-              {{end}}
-            </tbody>
-          </table>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  {{template "user-profile" .}}
   <details style="margin-bottom: 16px; margin-top: 16px;">
     <summary>Session dump</summary>
-    <pre>{{ toPrettyJson .session }}</pre>
+    <pre>{{toPrettyJson .session}}</pre>
   </details>
   <footer class="is-right">
     <form method="post" action="{{$.paths.signout}}">

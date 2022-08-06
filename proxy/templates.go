@@ -17,22 +17,26 @@ type (
 )
 
 const (
-	TemplateNameDocument  TemplateName = "document"
-	TemplateNameSignin    TemplateName = "signin"
-	TemplateNameSignout   TemplateName = "signout"
-	TemplateNameAuthorize TemplateName = "authorize"
-	TemplateNameStatus    TemplateName = "status"
-	TemplateNameError     TemplateName = "error"
+	TemplateNameDocument    TemplateName = "document"
+	TemplateNameSignin      TemplateName = "signin"
+	TemplateNameSignout     TemplateName = "signout"
+	TemplateNameAuthorize   TemplateName = "authorize"
+	TemplateNameStatus      TemplateName = "status"
+	TemplateNameUserProfile TemplateName = "user-profile"
+	TemplateNameError       TemplateName = "error"
 
-	TemplateContextKeyRequest     TemplateContextKey = http.TemplateContextKeyRequest
-	TemplateContextKeyRequestId   TemplateContextKey = http.TemplateContextKeyRequestId
-	TemplateContextKeySession     TemplateContextKey = http.TemplateContextKeySession
-	TemplateContextKeyError       TemplateContextKey = "error"
-	TemplateContextKeyUserProfile TemplateContextKey = "userProfile"
-	TemplateContextKeyStyles      TemplateContextKey = "styles"
-	TemplateContextKeyPaths       TemplateContextKey = "paths"
-	TemplateContextKeyContainer   TemplateContextKey = "container"
-	TemplateContextKeyConnectors  TemplateContextKey = "connectors"
+	TemplateContextKeyRequest             TemplateContextKey = http.TemplateContextKeyRequest
+	TemplateContextKeyRequestId           TemplateContextKey = http.TemplateContextKeyRequestId
+	TemplateContextKeySession             TemplateContextKey = http.TemplateContextKeySession
+	TemplateContextKeyError               TemplateContextKey = "error"
+	TemplateContextKeyUserProfile         TemplateContextKey = "userProfile"
+	TemplateContextKeyStyles              TemplateContextKey = "styles"
+	TemplateContextKeyPaths               TemplateContextKey = "paths"
+	TemplateContextKeyContainer           TemplateContextKey = "container"
+	TemplateContextKeyConnectors          TemplateContextKey = "connectors"
+	TemplateContextKeyProviders           TemplateContextKey = "providers"
+	TemplateContextKeyProvider            TemplateContextKey = "provider"
+	TemplateContextKeyProviderApplication TemplateContextKey = "providerApplication"
 )
 
 var (
@@ -54,16 +58,20 @@ var (
 	//go:embed templates/status.html
 	TemplateStatus string
 
+	//go:embed templates/user-profile.html
+	TemplateUserProfile string
+
 	//go:embed templates/error.html
 	TemplateError string
 
 	Templates = map[string]string{
-		string(TemplateNameDocument):  TemplateDocument,
-		string(TemplateNameSignin):    TemplateSignin,
-		string(TemplateNameSignout):   TemplateSignout,
-		string(TemplateNameAuthorize): TemplateAuthorize,
-		string(TemplateNameStatus):    TemplateStatus,
-		string(TemplateNameError):     TemplateError,
+		string(TemplateNameDocument):    TemplateDocument,
+		string(TemplateNameSignin):      TemplateSignin,
+		string(TemplateNameSignout):     TemplateSignout,
+		string(TemplateNameAuthorize):   TemplateAuthorize,
+		string(TemplateNameStatus):      TemplateStatus,
+		string(TemplateNameUserProfile): TemplateUserProfile,
+		string(TemplateNameError):       TemplateError,
 	}
 )
 

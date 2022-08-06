@@ -31,7 +31,6 @@ type (
 	}
 	ConnectorBasic struct {
 		Config       *ConnectorBasicConfig
-		Paths        Paths
 		UserProfiles map[string]*UserProfile
 	}
 )
@@ -89,9 +88,11 @@ func (c *ConnectorBasic) Label() string       { return c.Config.Label }
 func (c *ConnectorBasic) Description() string { return c.Config.Description }
 
 func (c *ConnectorBasic) Mount(router *http.Router) {
-	router = router.PathPrefix(PathConnectors + "/" + c.Name()).Subrouter()
-
-	di.MustInvoke(di.Default, func(t *template.Template, pr UserProfileRules) {
+	di.MustInvoke(di.Default, func(
+		t *template.Template,
+		profileRules UserProfileRules,
+		paths Paths,
+	) {
 		router.
 			HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				var err error
@@ -112,8 +113,8 @@ func (c *ConnectorBasic) Mount(router *http.Router) {
 						panic(err)
 					}
 
-					SessionUserProfileSet(session, profile, []Rule(pr)...)
-					Retpath(w, r, c.Paths[PathNameStatus])
+					SessionUserProfileSet(session, profile, []Rule(profileRules)...)
+					Retpath(w, r, paths[PathNameStatus])
 				}
 			}).
 			Methods(http.MethodPost)
@@ -159,10 +160,9 @@ func (c *ConnectorBasic) Authorize(r *http.Request) (*UserProfile, error) {
 	return profile, nil
 }
 
-func NewConnectorBasic(c *ConnectorBasicConfig, p Paths) *ConnectorBasic {
+func NewConnectorBasic(c *ConnectorBasicConfig) *ConnectorBasic {
 	connector := &ConnectorBasic{
 		Config:       c,
-		Paths:        p,
 		UserProfiles: map[string]*UserProfile{},
 	}
 	for name, user := range c.Users {

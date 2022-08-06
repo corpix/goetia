@@ -4,12 +4,12 @@
 
 <div class="error card">
   <div class="text-center" style="padding: 15px">
-    {{.error}}
+    {{$.error}}
     <hr/>
-    <div class="text-grey">request id <i>{{.requestId}}</i></div>
+    <div class="text-grey">request id <i>{{$.requestId}}</i></div>
   </div>
 
   <footer class="is-right">
-    <a href="{{.paths.status}}" class="button primary">Status Page</a>
+    <a href="{{$.paths.status}}" class="button primary">Status Page</a>
   </footer>
 </div>

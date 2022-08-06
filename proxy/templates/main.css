@@ -118,8 +118,12 @@ table.striped tr:nth-of-type(2n) {
   background-color: var(--bg-secondary-color);
 }
 
-td,th {
+.card td,.card th {
   vertical-align: top;
+  padding: 5px 7px;
+}
+
+.card .col {
   padding: 5px 7px;
 }
 
@@ -219,7 +223,7 @@ iframe {
 }
 
 .col,[class*=" col-"],[class^=col-] {
-  margin: 0 calc(var(--grid-gutter)/2) calc(var(--grid-gutter)/2);
+  margin: 0 calc(var(--grid-gutter)/2);
 }
 
 .col-1 {
@@ -641,7 +645,7 @@ button:disabled,button:disabled:hover,input:disabled,input:disabled:hover {
 }
 
 .card {
-  padding: 1rem 2rem;
+  padding: 1rem;
   background: var(--bg-color);
 }
 

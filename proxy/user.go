@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/corpix/gdk/http"
@@ -53,6 +54,17 @@ const (
 	SessionPayloadKeyUserRetpath http.SessionPayloadKey = "user-retpath"
 )
 
+var (
+  UserProfileKeys = []string{
+		UserProfileConnector,
+		UserProfileName,
+		UserProfileMail,
+		UserProfileGroups,
+		UserProfileDisplayName,
+		UserProfileAvatarUrl,
+	}
+)
+
 //
 
 func (c *UserProfileHeadersConfig) Default() {
@@ -62,14 +74,7 @@ func (c *UserProfileHeadersConfig) Default() {
 	if c.Map == nil {
 		c.Map = map[string]string{}
 	}
-	for _, key := range []string{
-		UserProfileConnector,
-		UserProfileName,
-		UserProfileMail,
-		UserProfileGroups,
-		UserProfileDisplayName,
-		UserProfileAvatarUrl,
-	} {
+	for _, key := range UserProfileKeys {
 		_, ok := c.Map[key]
 		if !ok {
 			c.Map[key] = "x-auth-" + key
@@ -123,16 +128,26 @@ func (p *UserProfile) MapInterface() map[string]interface{} {
 	return rm
 }
 
+func (p *UserProfile) Remap(mapping map[string]string) map[string]string {
+	var (
+		key      string
+		profile  = p.Map()
+		remapped = make(map[string]string, len(profile))
+	)
+	for k, v := range profile {
+		key = mapping[k]
+		if key != "" {
+			remapped[key] = v
+		}
+	}
+	return remapped
+}
+
 //
 
 func UserProfileHeaderSet(headers http.Header, profile *UserProfile, remap map[string]string) {
-	var key string
-	// FIXME: profile might be nil?
-	for k, v := range profile.Map() {
-		key = remap[k]
-		if key != "" {
-			headers.Set(key, v)
-		}
+	for k, v := range profile.Remap(remap) {
+		headers.Set(k, v)
 	}
 }
 
@@ -197,6 +212,17 @@ func SessionUserProfileGet(session *http.Session) *UserProfile {
 		Groups:      strings.Split(profile[UserProfileGroups], ","),
 		AvatarUrl:   profile[UserProfileAvatarUrl],
 	}
+}
+
+func SessionUserProfileGetOrRedirect(w http.ResponseWriter, r *http.Request, session *http.Session, signin string) *UserProfile {
+	profile := SessionUserProfileGet(session)
+	if profile == nil {
+		u := &url.URL{Path: signin}
+		u.Query().Set(UserRetpathQueryKey, r.URL.String())
+		http.Redirect(w, r, u.String(), http.StatusFound)
+		return nil
+	}
+	return profile
 }
 
 func SessionUserProfileSet(session *http.Session, profile *UserProfile, rules ...Rule) {
