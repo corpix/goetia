@@ -91,8 +91,8 @@ proxy:
 
   providers:
     enable:
-      - oauth
-      # - oidc
+      #- oauth
+      - oidc
     oauth:
       token:
         container:
@@ -104,11 +104,13 @@ proxy:
         app:
           label: "test app"
           key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          redirect-uri: "http://127.0.0.1:8080/non-existent/oauth2/callback"
+          redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
           profile:
             map:
               connector: ""
               avatar-url: "image"
+      paths:
+        profile: /userinfo
     oidc:
       token:
         container:
@@ -121,3 +123,5 @@ proxy:
           label: "test app"
           key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           redirect-uri: "http://127.0.0.1:8080/non-existent/oauth2/callback"
+      paths:
+        discovery: /discover

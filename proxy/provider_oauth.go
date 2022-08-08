@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/url"
+	"strings"
 
 	"github.com/corpix/gdk/di"
 	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
 	"github.com/corpix/gdk/template"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type (
@@ -19,6 +21,7 @@ type (
 
 		Token        *OauthTokenConfig                          `yaml:"token"`
 		Applications map[string]*ProviderOauthApplicationConfig `yaml:"applications"`
+		Paths        map[OauthHandlerPathName]OauthHandlerPath  `yaml:"paths"`
 	}
 	ProviderOauth struct {
 		Config       *ProviderOauthConfig
@@ -66,12 +69,34 @@ func (c *ProviderOauthConfig) Default() {
 			app.Label = name
 		}
 	}
+	if c.Paths == nil {
+		c.Paths = map[OauthHandlerPathName]OauthHandlerPath{}
+	}
+	for _, key := range OauthHandlerPathNames {
+		if _, ok := c.Paths[key]; !ok {
+			c.Paths[key] = OauthHandlerPaths[key]
+		}
+	}
 }
 
 func (c *ProviderOauthConfig) Validate() error {
 	if len(c.Applications) == 0 {
 		return errors.New("one or more applications should be defined")
 	}
+  for k, v := range c.Paths {
+    if len(v) == 0 {
+      return errors.Errorf("path %q should not be empty", k)
+    }
+  }
+	return nil
+}
+
+func (c *ProviderOauthConfig) Expand() error {
+  for k, v := range c.Paths {
+    if v[0] != '/' {
+      c.Paths[k] = "/" + v
+    }
+  }
 	return nil
 }
 
@@ -193,11 +218,21 @@ func (c *ProviderOauth) Application(kv KeyValue) (*ProviderOauthApplication, err
 	return c.ApplicationById(kv.Get(string(OauthParameterClientId)))
 }
 
+func (c *ProviderOauth) Path(name OauthHandlerPathName) string {
+	return string(c.Config.Paths[name])
+}
+
 //
 
 func (c *ProviderOauth) Name() string        { return c.Config.Name }
 func (c *ProviderOauth) Label() string       { return c.Config.Label }
 func (c *ProviderOauth) Description() string { return c.Config.Description }
+
+func (c *ProviderOauth) splitAuthToken(h http.Header) []byte {
+	tokenStr := h.Get(http.HeaderAuthorization)
+	tokenParts := strings.SplitN(tokenStr, " ", 2)
+	return []byte(tokenParts[len(tokenParts)-1])
+}
 
 func (c *ProviderOauth) Mount(router *http.Router) {
 	di.MustInvoke(di.Default, func(
@@ -209,7 +244,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 		templatePaths := paths.TemplateContext()
 
 		router.
-			HandleFunc(string(OauthHandlerPathAuthorize), func(w http.ResponseWriter, r *http.Request) {
+			HandleFunc(c.Path(OauthHandlerPathNameAuthorize), func(w http.ResponseWriter, r *http.Request) {
 				session := http.RequestSessionMustGet(r)
 				profile := SessionUserProfileGetOrRedirect(w, r, session, paths[PathNameSignin])
 				if profile == nil {
@@ -235,11 +270,11 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 					w,
 				)
 			}).
-			Name(string(OauthHandlerPathAuthorize)).
+			Name(string(OauthHandlerPathNameAuthorize)).
 			Methods(http.MethodGet)
 
 		router.
-			HandleFunc(string(OauthHandlerPathAuthorize), func(w http.ResponseWriter, r *http.Request) {
+			HandleFunc(c.Path(OauthHandlerPathNameAuthorize), func(w http.ResponseWriter, r *http.Request) {
 				session := http.RequestSessionMustGet(r)
 				profile := SessionUserProfileGetOrRedirect(w, r, session, paths[PathNameSignin])
 				if profile == nil {
@@ -298,11 +333,13 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 			Methods(http.MethodPost)
 
 		router.
-			HandleFunc(string(OauthHandlerPathToken), func(w http.ResponseWriter, r *http.Request) {
+			HandleFunc(c.Path(OauthHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
 				err := r.ParseForm()
 				if err != nil {
 					panic(err)
 				}
+
+				spew.Dump(r.Form, r.URL.Query())
 
 				app, err := c.Application(r.Form)
 				if err != nil {
@@ -340,16 +377,16 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
 				w.Write(resBytes)
 			}).
-			Name(string(OauthHandlerPathToken)).
+			Name(string(OauthHandlerPathNameToken)).
 			Methods(http.MethodPost)
 
 		router.
-			HandleFunc(string(OauthHandlerPathProfile), func(w http.ResponseWriter, r *http.Request) {
-				token, err := c.GetToken(OauthTokenTypeAccess, []byte(r.Header.Get(http.HeaderAuthorization)))
+			HandleFunc(c.Path(OauthHandlerPathNameProfile), func(w http.ResponseWriter, r *http.Request) {
+				token, err := c.GetToken(OauthTokenTypeAccess, c.splitAuthToken(r.Header))
 				if err != nil {
 					panic(err)
 				}
-        app, err := c.ApplicationById(token.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+				app, err := c.ApplicationById(token.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
 				if err != nil {
 					panic(err)
 				}
@@ -369,12 +406,12 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
 				w.Write(resBytes)
 			}).
-			Name(string(OauthHandlerPathProfile)).
+			Name(string(OauthHandlerPathNameProfile)).
 			Methods(http.MethodGet)
 
 		router.
-			HandleFunc(string(OauthHandlerPathValidate), func(w http.ResponseWriter, r *http.Request) {
-				token, err := c.GetToken(OauthTokenTypeAccess, []byte(r.Header.Get(http.HeaderAuthorization)))
+			HandleFunc(c.Path(OauthHandlerPathNameValidate), func(w http.ResponseWriter, r *http.Request) {
+				token, err := c.GetToken(OauthTokenTypeAccess, c.splitAuthToken(r.Header))
 				if err != nil {
 					panic(err)
 				}
@@ -385,7 +422,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 
 				w.WriteHeader(http.StatusOK)
 			}).
-			Name(string(OauthHandlerPathValidate)).
+			Name(string(OauthHandlerPathNameValidate)).
 			Methods(http.MethodGet)
 	})
 }

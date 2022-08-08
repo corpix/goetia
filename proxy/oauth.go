@@ -7,7 +7,9 @@ import (
 )
 
 type (
-	OauthHandlerPath   string
+	OauthHandlerPathName string
+	OauthHandlerPath     string
+
 	OauthParameterName string
 
 	OauthTokenConfig        = http.TokenConfig
@@ -26,10 +28,17 @@ type (
 )
 
 const (
+	OauthHandlerPathNameAuthorize OauthHandlerPathName = "authorize"
+	OauthHandlerPathNameToken     OauthHandlerPathName = "token"
+	OauthHandlerPathNameProfile   OauthHandlerPathName = "profile"
+	OauthHandlerPathNameValidate  OauthHandlerPathName = "validate"
+
 	OauthHandlerPathAuthorize OauthHandlerPath = "/authorize"
 	OauthHandlerPathToken     OauthHandlerPath = "/token"
 	OauthHandlerPathProfile   OauthHandlerPath = "/profile"
 	OauthHandlerPathValidate  OauthHandlerPath = "/validate"
+
+	//
 
 	OauthParameterClientId         OauthParameterName = "client_id"
 	OauthParameterClientKey        OauthParameterName = "client_secret"
@@ -49,6 +58,21 @@ const (
 	OauthTokenTypeCode    OauthTokenType = "code"
 	OauthTokenTypeAccess  OauthTokenType = "access"
 	OauthTokenTypeRefresh OauthTokenType = "refresh"
+)
+
+var (
+	OauthHandlerPathNames = []OauthHandlerPathName{
+		OauthHandlerPathNameAuthorize,
+		OauthHandlerPathNameToken,
+		OauthHandlerPathNameProfile,
+		OauthHandlerPathNameValidate,
+	}
+	OauthHandlerPaths = map[OauthHandlerPathName]OauthHandlerPath{
+		OauthHandlerPathNameAuthorize: OauthHandlerPathAuthorize,
+		OauthHandlerPathNameToken:     OauthHandlerPathToken,
+		OauthHandlerPathNameProfile:   OauthHandlerPathProfile,
+		OauthHandlerPathNameValidate:  OauthHandlerPathValidate,
+	}
 )
 
 //

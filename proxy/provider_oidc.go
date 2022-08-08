@@ -45,14 +45,25 @@ func (c *ProviderOidcConfig) Default() {
 	if c.ProviderOauthConfig.Description == "" {
 		c.ProviderOauthConfig.Description = "OIDC provider"
 	}
+  c.ProviderOauthConfig.Default()
+
+  for _, key := range OidcHandlerPathNames {
+		if _, ok := c.Paths[OauthHandlerPathName(key)]; !ok {
+			c.Paths[OauthHandlerPathName(key)] = OauthHandlerPath(OidcHandlerPaths[key])
+		}
+	}
 }
 
 //
 
+func (c *ProviderOidc) Path(name OidcHandlerPathName) string {
+	return string(c.Config.Paths[OauthHandlerPathName(name)])
+}
+
 func (c *ProviderOidc) Mount(router *http.Router) {
 	c.ProviderOauth.Mount(router)
 
-	authorizePath, err := router.Get(string(OauthHandlerPathAuthorize)).GetPathTemplate()
+	authorizePath, err := router.Get(string(OidcHandlerPathNameAuthorize)).GetPathTemplate()
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +78,7 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 		sessionService *http.SessionService,
 	) {
 		router.
-			HandleFunc(string(OidcHandlerPathDiscovery), func(w http.ResponseWriter, r *http.Request) {
+			HandleFunc(c.Path(OidcHandlerPathNameDiscovery), func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
 
 				err := json.NewEncoder(w).Encode(&ProviderOidcDiscovery{
@@ -85,6 +96,7 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 					panic(err)
 				}
 			}).
+      Name(string(OidcHandlerPathNameDiscovery)).
 			Methods(http.MethodGet)
 
 		// router.
