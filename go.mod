@@ -1,9 +1,9 @@
 module github.com/corpix/goetia
 
-go 1.17
+go 1.18
 
 require (
-	github.com/corpix/gdk v0.0.0-20220806144353-85ab6e9e8725
+	github.com/corpix/gdk v0.0.0-20220903114952-9a0c311c16c1
 	github.com/davecgh/go-spew v1.1.1
 )
 

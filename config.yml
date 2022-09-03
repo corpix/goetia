@@ -116,8 +116,15 @@ proxy:
         container:
           type: jwt
           jwt:
-            algorithm: hs512
-            key: aaaaaaaa
+            algorithm: es512
+            key: |
+              -----BEGIN EC PRIVATE KEY-----
+              MIHcAgEBBEIB9hjt4SMz8Miwflpq3i+HqRD6DFG0NcBm4+TbleDWMW6eiNXHBU0U
+              XQa1l3kJX4CqH78JzuJzpUeKnpigUgbvY6mgBwYFK4EEACOhgYkDgYYABABAhfxS
+              q4IUhLztU3M5Yo+NdwqMDPnNMWm2LpgNdeJjpK/WKwbMH4x0Uxqwcp/VkwIHgrge
+              rzOoGaRBy3x8v/2ecQHegB0RfGWX0Wjnz3Hjew/qC4XXiJCZj0TrxQyLq4avy+2r
+              AU3XosZTvMTIn1IgRp7ARp+nDkKDRKdD/dvRvXiWsw==
+              -----END EC PRIVATE KEY-----
       applications:
         app:
           label: "test app"
