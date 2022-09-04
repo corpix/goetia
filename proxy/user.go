@@ -55,7 +55,7 @@ const (
 )
 
 var (
-  UserProfileKeys = []string{
+	UserProfileKeys = []string{
 		UserProfileConnector,
 		UserProfileName,
 		UserProfileMail,

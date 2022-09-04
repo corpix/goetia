@@ -83,20 +83,20 @@ func (c *ProviderOauthConfig) Validate() error {
 	if len(c.Applications) == 0 {
 		return errors.New("one or more applications should be defined")
 	}
-  for k, v := range c.Paths {
-    if len(v) == 0 {
-      return errors.Errorf("path %q should not be empty", k)
-    }
-  }
+	for k, v := range c.Paths {
+		if len(v) == 0 {
+			return errors.Errorf("path %q should not be empty", k)
+		}
+	}
 	return nil
 }
 
 func (c *ProviderOauthConfig) Expand() error {
-  for k, v := range c.Paths {
-    if v[0] != '/' {
-      c.Paths[k] = "/" + v
-    }
-  }
+	for k, v := range c.Paths {
+		if v[0] != '/' {
+			c.Paths[k] = "/" + v
+		}
+	}
 	return nil
 }
 

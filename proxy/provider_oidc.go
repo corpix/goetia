@@ -18,6 +18,7 @@ type (
 	ProviderOidcApplication       = ProviderOauthApplication
 	ProviderOidc                  struct {
 		*ProviderOauth
+		Jwks crypto.TokenJwtKeySet
 	}
 	ProviderOidcDiscovery struct {
 		Issuer                            string   `json:"issuer,omitempty"`
@@ -46,9 +47,9 @@ func (c *ProviderOidcConfig) Default() {
 	if c.ProviderOauthConfig.Description == "" {
 		c.ProviderOauthConfig.Description = "OIDC provider"
 	}
-  c.ProviderOauthConfig.Default()
+	c.ProviderOauthConfig.Default()
 
-  for _, key := range OidcHandlerPathNames {
+	for _, key := range OidcHandlerPathNames {
 		if _, ok := c.Paths[OauthHandlerPathName(key)]; !ok {
 			c.Paths[OauthHandlerPathName(key)] = OauthHandlerPath(OidcHandlerPaths[key])
 		}
@@ -64,11 +65,11 @@ func (c *ProviderOidc) Path(name OidcHandlerPathName) string {
 func (c *ProviderOidc) Mount(router *http.Router) {
 	c.ProviderOauth.Mount(router)
 
-  var (
-    authorizePath string
-    tokenPath string
-    jwksPath string
-  )
+	var (
+		authorizePath string
+		tokenPath     string
+		jwksPath      string
+	)
 
 	//
 
@@ -96,7 +97,7 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 						u.Host = r.Host
 						u.Path = tokenPath
 					}).String(),
-          JwksUri: h.Url(r.URL, func(u *url.URL) {
+					JwksUri: h.Url(r.URL, func(u *url.URL) {
 						u.Host = r.Host
 						u.Path = jwksPath
 					}).String(),
@@ -105,38 +106,50 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 					panic(err)
 				}
 			}).
-      Name(string(OidcHandlerPathNameDiscovery)).
+			Name(string(OidcHandlerPathNameDiscovery)).
 			Methods(http.MethodGet)
 
-    router.
-      HandleFunc(c.Path(OidcHandlerPathNameJwks), func(http.ResponseWriter, *http.Request) {
+		router.
+			HandleFunc(c.Path(OidcHandlerPathNameJwks), func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
 
-      }).
-      Name(string(OidcHandlerPathNameJwks)).
-      Methods(http.MethodGet)
+				err := json.NewEncoder(w).Encode(c.Jwks)
+				if err != nil {
+					panic(err)
+				}
+			}).
+			Name(string(OidcHandlerPathNameJwks)).
+			Methods(http.MethodGet)
 
-    //
+		//
 
-    authorizePath = RoutePathTemplate(router, OidcHandlerPathNameAuthorize)
-    tokenPath = RoutePathTemplate(router, OidcHandlerPathNameToken)
-    jwksPath = RoutePathTemplate(router, OidcHandlerPathNameJwks)
+		authorizePath = RoutePathTemplate(router, OidcHandlerPathNameAuthorize)
+		tokenPath = RoutePathTemplate(router, OidcHandlerPathNameToken)
+		jwksPath = RoutePathTemplate(router, OidcHandlerPathNameJwks)
 	})
 }
 
 func NewProviderOidc(c *ProviderOidcConfig) *ProviderOidc {
-  oauthProvider := NewProviderOauth(c.ProviderOauthConfig)
-  if !oauthProvider.TokenService.Container.Cap().Has(crypto.TokenCapPubKeyCrypto) {
-    panic("token container does not have public key cryptography capability, probably you use shared secret signature scheme which is not capable to serve OIDC needs, switch to JWT with ES512 or something")
-  }
+	oauthProvider := NewProviderOauth(c.ProviderOauthConfig)
+	if _, ok := oauthProvider.TokenService.Container.(*crypto.TokenContainerJwt); !ok {
+		panic("OIDC is working only with JWT tokens")
+	}
+	if !oauthProvider.TokenService.Container.Cap().Has(crypto.TokenCapPubKeyCrypto) {
+		panic("OIDC requires JWT with public key cryptography")
+	}
+
 	provider := &ProviderOidc{
 		ProviderOauth: oauthProvider,
+		Jwks: crypto.TokenJwtKeySet{
+			Keys: []*crypto.TokenJwtKey{oauthProvider.TokenService.Container.(*crypto.TokenContainerJwt).Key},
+		},
 	}
 	return provider
 }
 
 func NewProviderOidcApplication(name string, c *ProviderOidcApplicationConfig) *ProviderOidcApplication {
 	return &ProviderOidcApplication{
-		id:   name,
+		id:     name,
 		Config: c,
 	}
 }
