@@ -10,7 +10,6 @@ import (
 	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
 	"github.com/corpix/gdk/template"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type (
@@ -338,8 +337,6 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				if err != nil {
 					panic(err)
 				}
-
-				spew.Dump(r.Form, r.URL.Query())
 
 				app, err := c.Application(r.Form)
 				if err != nil {
