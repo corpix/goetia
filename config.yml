@@ -129,6 +129,15 @@ proxy:
         app:
           label: "test app"
           key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          redirect-uri: "http://127.0.0.1:8080/non-existent/oauth2/callback"
+          redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
+          profile:
+            map:
+              connector: ""
+              avatar-url: "image"
+              display-name: "name"
+              mail: "email"
+              name: "login"
+            expand: >-
+              .groups = (.groups | split(","))
       paths:
         discovery: /discover

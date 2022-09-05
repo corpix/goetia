@@ -1,7 +1,7 @@
 <table class="striped">
   <tbody>
     <tr>
-      {{$userProfileMap := .userProfile.MapInterface}}
+      {{$userProfileMap := .userProfile.Map}}
       {{$userProfileMapKeys := keys $userProfileMap | sortAlpha | reverse}}
       {{if (get $userProfileMap "avatar-url")}}
       <td style="width: 230px;"><img src="{{get $userProfileMap "avatar-url"}}"/></td>

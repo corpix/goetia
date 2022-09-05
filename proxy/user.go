@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/itchyny/gojq"
+
 	"github.com/corpix/gdk/http"
 )
 
@@ -108,8 +110,8 @@ func (c *UserRetpathConfig) Default() {
 	}
 }
 
-func (p *UserProfile) Map() map[string]string {
-	return map[string]string{
+func (p *UserProfile) Map() map[string]interface{} {
+	return map[string]interface{}{
 		UserProfileConnector:   p.Connector,
 		UserProfileName:        p.Name,
 		UserProfileMail:        p.Mail,
@@ -119,20 +121,10 @@ func (p *UserProfile) Map() map[string]string {
 	}
 }
 
-func (p *UserProfile) MapInterface() map[string]interface{} {
-	m := p.Map()
-	rm := make(map[string]interface{}, len(m))
-	for k, v := range m {
-		rm[k] = v
-	}
-	return rm
-}
-
-func (p *UserProfile) Remap(mapping map[string]string) map[string]string {
+func UserProfileRemap(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
 	var (
 		key      string
-		profile  = p.Map()
-		remapped = make(map[string]string, len(profile))
+		remapped = make(map[string]interface{}, len(profile))
 	)
 	for k, v := range profile {
 		key = mapping[k]
@@ -143,11 +135,35 @@ func (p *UserProfile) Remap(mapping map[string]string) map[string]string {
 	return remapped
 }
 
+func (p *UserProfile) Remap(mapping map[string]string) map[string]interface{} {
+	return UserProfileRemap(p.Map(), mapping)
+}
+
+// NOTE: it is working only with map[]interface{} because of asserts in gojq
+func UserProfileExpand(profile map[string]interface{}, expr *gojq.Query) interface{} {
+	iter := expr.Run(profile)
+	for {
+		v, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if err, ok := v.(error); ok {
+			panic(err)
+		}
+		return v
+	}
+	panic("user profile expand expression returned nothing")
+}
+
+func (p *UserProfile) Expand(expr *gojq.Query) interface{} {
+	return UserProfileExpand(p.Map(), expr)
+}
+
 //
 
 func UserProfileHeaderSet(headers http.Header, profile *UserProfile, remap map[string]string) {
 	for k, v := range profile.Remap(remap) {
-		headers.Set(k, v)
+		headers.Set(k, fmt.Sprintf("%s", v))
 	}
 }
 

@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/itchyny/gojq"
+
 	"github.com/corpix/gdk/di"
 	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
@@ -39,11 +41,14 @@ type (
 		redirectUri *url.URL
 	}
 	ProviderOauthApplication struct {
-		id     string
 		Config *ProviderOauthApplicationConfig
+
+		id                string
+		profileExpandExpr *gojq.Query
 	}
 	ProviderOauthApplicationProfileConfig struct {
-		Map map[string]string `yaml:"map"`
+		Map    map[string]string `yaml:"map"`
+		Expand string            `yaml:"expand"`
 	}
 )
 
@@ -163,6 +168,15 @@ func (a *ProviderOauthApplication) Label() string {
 
 func (a *ProviderOauthApplication) RediretUri() *url.URL {
 	return a.Config.redirectUri
+}
+
+func (a *ProviderOauthApplication) UserProfileExpandRemap(profile *UserProfile) interface{} {
+	m := profile.Map()
+	rm := UserProfileRemap(m, a.Config.Profile.Map)
+	if a.profileExpandExpr == nil {
+		return rm
+	}
+	return UserProfileExpand(rm, a.profileExpandExpr)
 }
 
 //
@@ -348,9 +362,15 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				if err != nil {
 					panic(err)
 				}
+				app, err := c.ApplicationById(code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+				if err != nil {
+					panic(err)
+				}
+
+				//
 
 				token := c.TokenService.New(OauthTokenTypeAccess)
-				token.Set(string(OauthTokenPayloadKeyApplicationId), code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+				token.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
 				token.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
 				tokenBytes := c.TokenService.MustEncode(token)
 
@@ -388,7 +408,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 					panic(err)
 				}
 
-				profile := SessionUserProfileGet(session).Remap(app.Config.Profile.Map)
+				profile := app.UserProfileExpandRemap(SessionUserProfileGet(session))
 				resBytes, err := json.Marshal(profile)
 				if err != nil {
 					panic(err)
@@ -434,8 +454,20 @@ func NewProviderOauth(c *ProviderOauthConfig) *ProviderOauth {
 }
 
 func NewProviderOauthApplication(id string, c *ProviderOauthApplicationConfig) *ProviderOauthApplication {
+	var (
+		profileExpandExpr *gojq.Query
+		err               error
+	)
+	if c.Profile.Expand != "" {
+		profileExpandExpr, err = gojq.Parse(c.Profile.Expand)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return &ProviderOauthApplication{
-		id:     id,
-		Config: c,
+		Config:            c,
+		id:                id,
+		profileExpandExpr: profileExpandExpr,
 	}
 }
