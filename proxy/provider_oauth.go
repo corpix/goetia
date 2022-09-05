@@ -338,11 +338,6 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 					panic(err)
 				}
 
-				app, err := c.Application(r.Form)
-				if err != nil {
-					panic(err)
-				}
-
 				//
 
 				code, err := c.GetToken(OauthTokenTypeCode, []byte(r.Form.Get(string(OauthParameterCode))))
@@ -355,7 +350,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				}
 
 				token := c.TokenService.New(OauthTokenTypeAccess)
-				token.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
+				token.Set(string(OauthTokenPayloadKeyApplicationId), code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
 				token.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
 				tokenBytes := c.TokenService.MustEncode(token)
 
