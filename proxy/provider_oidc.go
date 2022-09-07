@@ -68,6 +68,7 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 	var (
 		authorizePath string
 		tokenPath     string
+		discoveryPath string
 		jwksPath      string
 	)
 
@@ -78,7 +79,9 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 		t *template.Template,
 		profileRules UserProfileRules,
 		paths Paths,
+		csrfService *http.CsrfTokenService,
 		sessionService *http.SessionService,
+		headersService *UserProfileHeadersService,
 	) {
 		router.
 			HandleFunc(c.Path(OidcHandlerPathNameDiscovery), func(w http.ResponseWriter, r *http.Request) {
@@ -123,9 +126,14 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 
 		//
 
-		authorizePath = RoutePathTemplate(router, OidcHandlerPathNameAuthorize)
-		tokenPath = RoutePathTemplate(router, OidcHandlerPathNameToken)
-		jwksPath = RoutePathTemplate(router, OidcHandlerPathNameJwks)
+		authorizePath = http.RoutePathTemplate(router, OidcHandlerPathNameAuthorize)
+		tokenPath = http.RoutePathTemplate(router, OidcHandlerPathNameToken)
+		discoveryPath = http.RoutePathTemplate(router, OidcHandlerPathNameDiscovery)
+		jwksPath = http.RoutePathTemplate(router, OidcHandlerPathNameJwks)
+
+		csrfService.SkipPaths(discoveryPath, jwksPath)
+		sessionService.SkipPaths(discoveryPath, jwksPath)
+		headersService.SkipPaths(discoveryPath, jwksPath)
 	})
 }
 

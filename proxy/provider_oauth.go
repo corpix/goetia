@@ -252,8 +252,15 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 		t *template.Template,
 		profileRules UserProfileRules,
 		paths Paths,
+		csrfService *http.CsrfTokenService,
 		sessionService *http.SessionService,
+		headersService *UserProfileHeadersService,
 	) {
+		var (
+			tokenPath   string
+			profilePath string
+		)
+
 		templatePaths := paths.TemplateContext()
 
 		router.
@@ -436,6 +443,13 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 			}).
 			Name(string(OauthHandlerPathNameValidate)).
 			Methods(http.MethodGet)
+
+		tokenPath = http.RoutePathTemplate(router, OauthHandlerPathNameToken)
+		profilePath = http.RoutePathTemplate(router, OauthHandlerPathNameProfile)
+
+		csrfService.SkipPaths(tokenPath, profilePath)
+		sessionService.SkipPaths(tokenPath, profilePath)
+		headersService.SkipPaths(tokenPath, profilePath)
 	})
 }
 

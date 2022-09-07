@@ -250,7 +250,9 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 	}
 
 	if conf.User.Profile.Headers.Enable {
-		h.Router.Use(MiddlewareUserProfileHeaders(conf.User.Profile.Headers))
+		headersService := NewUserProfileHeadersService(conf.User.Profile.Headers)
+		di.MustProvide(di.Default, func() *UserProfileHeadersService { return headersService })
+		h.Router.Use(MiddlewareUserProfileHeaders(headersService))
 	}
 
 	//

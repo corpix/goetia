@@ -3,7 +3,7 @@ module github.com/corpix/goetia
 go 1.18
 
 require (
-	github.com/corpix/gdk v0.0.0-20220904075534-09494ba07387
+	github.com/corpix/gdk v0.0.0-20220907100908-33d0a584ce51
 	github.com/davecgh/go-spew v1.1.1
 	github.com/lestrrat-go/jwx v1.2.25
 )

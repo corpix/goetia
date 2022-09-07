@@ -5,7 +5,7 @@
 {{range $connector := .connectors}}
 <div class="row is-center">
   <form method="post" action="{{pathJoin $.paths.connectors $connector.Name}}/">
-    <input type="hidden" name="csrf" value="{{csrf $.session (pathJoin $.paths.connectors $connector.Name)}}">
+    <input type="hidden" name="_csrf" value="{{csrf $.session (printf "%s/" (pathJoin $.paths.connectors $connector.Name))}}">
     <button type="submit"
             title="{{$connector.Name}} - {{$connector.Description}}"
             class="button outline primary"

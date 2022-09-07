@@ -27,6 +27,9 @@ type (
 		Response         *bool             `yaml:"response"`
 		*http.SkipConfig `yaml:",inline"`
 	}
+	UserProfileHeadersService struct {
+		Config *UserProfileHeadersConfig
+	}
 	UserRetpathConfig struct {
 		Rules []*RuleConfig `yaml:"rules"`
 	}
@@ -94,6 +97,12 @@ func (c *UserProfileHeadersConfig) Default() {
 
 	if c.SkipConfig == nil {
 		c.SkipConfig = &http.SkipConfig{}
+	}
+}
+
+func (srv *UserProfileHeadersService) SkipPaths(paths ...string) {
+	for _, path := range paths {
+		srv.Config.SkipPaths[path] = struct{}{}
 	}
 }
 
@@ -167,11 +176,11 @@ func UserProfileHeaderSet(headers http.Header, profile *UserProfile, remap map[s
 	}
 }
 
-func MiddlewareUserProfileHeaders(c *UserProfileHeadersConfig) http.Middleware {
-	setReq, setRes := *c.Request, *c.Response
+func MiddlewareUserProfileHeaders(srv *UserProfileHeadersService) http.Middleware {
+	setReq, setRes := *srv.Config.Request, *srv.Config.Response
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if http.Skip(c.SkipConfig, r) {
+			if http.Skip(srv.Config.SkipConfig, r) {
 				h.ServeHTTP(w, r)
 				return
 			}
@@ -182,18 +191,22 @@ func MiddlewareUserProfileHeaders(c *UserProfileHeadersConfig) http.Middleware {
 			if setReq {
 				profile = SessionUserProfileGet(session)
 				if profile != nil {
-					UserProfileHeaderSet(r.Header, profile, c.Map)
+					UserProfileHeaderSet(r.Header, profile, srv.Config.Map)
 				}
 			}
 			h.ServeHTTP(w, r)
 			if setRes {
 				profile = SessionUserProfileGet(session)
 				if profile != nil {
-					UserProfileHeaderSet(w.Header(), profile, c.Map)
+					UserProfileHeaderSet(w.Header(), profile, srv.Config.Map)
 				}
 			}
 		})
 	}
+}
+
+func NewUserProfileHeadersService(c *UserProfileHeadersConfig) *UserProfileHeadersService {
+	return &UserProfileHeadersService{Config: c}
 }
 
 //
