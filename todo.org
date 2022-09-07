@@ -39,13 +39,17 @@ not sure we need this, but this was a feature we have in the past, why not suppo
   best option is to make it possible to define this rules
   for each user profile field
 
-* TODO implement some sort of "mode"?
+* DONE implement some sort of "mode"?
 - reverse proxy mode
 - nginx auth responder mode
 - auth provider mode
 - ...?
 
-* TODO configurable header names
+<2022-09-07 Wed> don't think this is really required, have http.proxy.enable, this should cover most cases
+
+* DONE configurable header names
+<2022-09-07 Wed> done via proxy.user.headers.map
+
 * TODO providers as plugins
   extend providers registry without codebase modifications
   (go plugins)
@@ -63,3 +67,15 @@ not sure we need this, but this was a feature we have in the past, why not suppo
 * TODO a way to run connector code on signout
 signout for basic auth is not consistent
 (you sould sign in after sign out without entering a password)
+
+* DONE login into grafana
+
+<2022-09-05 Mon> wtf is wrong with you?
+#+begin_src console
+ERROR[09-05|13:35:08] Failed to search JSON for attribute      logger=oauth.generic_oauth error="failed to search user info JSON response with provided path: \"display-name\": SyntaxError: Unexpected token at the end of the expression: tNumber"
+WARN [09-05|13:35:08] Failed to extract role                   logger=oauth.generic_oauth error="failed to search user info JSON response with provided path: \"contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'\": Invalid type for: <nil>, expected: []jmespath.jpType{\"array\", \"string\"}"
+#+end_src
+
+regarding =display-name=: for some reason it doesnt like =-= in key.
+
+<2022-09-07 Wed> ok, will use gojq to postprocess user profiles, so we could have clean grafana setup. done
