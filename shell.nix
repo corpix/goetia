@@ -22,8 +22,9 @@ in stdenv.mkDerivation rec {
     git jq yq-go tmux findutils gnumake
 
     skopeo
-    go gopls golangci-lint
+    go gopls golangci-lint delve
   ];
+  hardeningDisable = [ "fortify" ];
   shellHook = ''
     export root=$(pwd)
 
