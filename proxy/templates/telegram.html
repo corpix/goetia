@@ -1,0 +1,20 @@
+<div class="is-center text-uppercase" style="padding: 35px; font-size: 3rem">
+  authorize access using a telegram bot
+</div>
+
+<p class="card bg-error" style="padding:15px">
+  Scan QR code or click on the link below. Then <b>press "START"</b> to approve login using your Telegram account.
+</p>
+
+<div style="text-align: center">
+  <img src="{{qr (printf "https://t.me/%s?start=%s" $.telegram.bot.UserName $.telegram.token) 350}}">
+  <br/>
+  <a href="https://t.me/{{$.telegram.bot.UserName}}?start={{$.telegram.token}}" target="_blank">https://t.me/{{$.telegram.bot.UserName}}</a>
+</div>
+
+<script>
+  setInterval(
+      () => fetch("{{$.request.URL.String}}/{{$.telegram.token}}"),
+      1000,
+  );
+</script>

@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"github.com/corpix/gdk/crypto"
 	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
 	"github.com/corpix/gdk/log"
@@ -12,19 +13,27 @@ type (
 
 	OauthParameterName string
 
-	OauthTokenConfig        = http.TokenConfig
-	OauthToken              = http.Token
+	OauthTokenConfig   = http.TokenConfig
+	OauthTokenConfigs  = map[string]*OauthTokenConfig
+	OauthToken         = http.Token
+	OauthTokenResponse struct {
+		Type         string `json:"token_type"`
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token,omitempty"`
+	}
 	OauthTokenPayloadKey    string
 	OauthTokenType          string
-	OauthTokenContainer     http.TokenContainer
-	OauthTokenEncodeDecoder http.TokenEncodeDecoder
-	OauthTokenValidator     http.TokenValidator
-	OauthTokenService       struct {
+	OauthTokenContainer     crypto.TokenContainer
+	OauthTokenEncodeDecoder crypto.TokenEncodeDecoder
+	OauthTokenValidator     crypto.TokenValidator
+	OauthTokenTypeService   struct {
+		Type          OauthTokenType
 		Config        *OauthTokenConfig
 		Container     OauthTokenContainer
 		EncodeDecoder OauthTokenEncodeDecoder
 		Validator     OauthTokenValidator
 	}
+	OauthTokenService map[OauthTokenType]*OauthTokenTypeService
 )
 
 const (
@@ -77,56 +86,56 @@ var (
 
 //
 
-func (srv *OauthTokenService) New(typ OauthTokenType) *OauthToken {
-	token := NewOauthToken(srv.Config)
+func (srv OauthTokenService) New(typ OauthTokenType) *OauthToken {
+	token := NewOauthToken(srv[typ].Config)
 	token.Set(string(OauthTokenPayloadKeyType), typ)
 	return token
 }
 
-func (srv *OauthTokenService) Encode(token *OauthToken) ([]byte, error) {
-	tokenBytes, err := srv.Container.Encode(token)
+func (srv OauthTokenService) Encode(typ OauthTokenType, token *OauthToken) ([]byte, error) {
+	tokenBytes, err := srv[typ].Container.Encode(token)
 	if err != nil {
 		return nil, err
 	}
-	if srv.EncodeDecoder != nil {
-		return srv.EncodeDecoder.Encode(tokenBytes)
+	if srv[typ].EncodeDecoder != nil {
+		return srv[typ].EncodeDecoder.Encode(tokenBytes)
 	}
 	return tokenBytes, nil
 }
 
-func (srv *OauthTokenService) MustEncode(token *OauthToken) []byte {
-	buf, err := srv.Encode(token)
+func (srv OauthTokenService) MustEncode(typ OauthTokenType, token *OauthToken) []byte {
+	buf, err := srv.Encode(typ, token)
 	if err != nil {
 		panic(err)
 	}
 	return buf
 }
 
-func (srv *OauthTokenService) Decode(buf []byte) (*OauthToken, error) {
+func (srv OauthTokenService) Decode(typ OauthTokenType, buf []byte) (*OauthToken, error) {
 	var err error
-	if srv.EncodeDecoder != nil {
-		buf, err = srv.EncodeDecoder.Decode(buf)
+	if srv[typ].EncodeDecoder != nil {
+		buf, err = srv[typ].EncodeDecoder.Decode(buf)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return srv.Container.Decode(buf)
+	return srv[typ].Container.Decode(buf)
 }
 
-func (srv *OauthTokenService) MustDecode(buf []byte) *OauthToken {
-	t, err := srv.Decode(buf)
+func (srv OauthTokenService) MustDecode(typ OauthTokenType, buf []byte) *OauthToken {
+	t, err := srv.Decode(typ, buf)
 	if err != nil {
 		panic(err)
 	}
 	return t
 }
 
-func (srv *OauthTokenService) Validate(typ OauthTokenType, t *OauthToken) error {
-	if !*srv.Config.Validator.Enable {
+func (srv OauthTokenService) Validate(typ OauthTokenType, t *OauthToken) error {
+	if !*srv[typ].Config.Validator.Enable {
 		return nil
 	}
 
-	err := srv.Validator.Validate(t)
+	err := srv[typ].Validator.Validate(t)
 	if err != nil {
 		return err
 	}
@@ -170,13 +179,27 @@ func (srv *OauthTokenService) Validate(typ OauthTokenType, t *OauthToken) error 
 	return nil
 }
 
-func NewOauthTokenService(c *OauthTokenConfig) *OauthTokenService {
-	return &OauthTokenService{
-		Config:        c,
-		Container:     http.NewTokenContainer(c.Container),
-		EncodeDecoder: http.NewTokenEncodeDecoder(c.Encoder),
-		Validator:     http.NewTokenValidator(c.Validator),
+func NewOauthTokenService(c OauthTokenConfigs) OauthTokenService {
+	m := make(OauthTokenService, len(c))
+	for k, v := range c {
+		container := http.NewTokenContainer(v.Container)
+		// TODO: maybe we could find a way to treat container a blackbox, not depending on the internal structure?
+		// this could be achieved using options, but requires gdk api changes (crypto.NewTokenContainer)
+		switch cont := container.(type) {
+		case *crypto.TokenContainerJwt:
+			cont.Key.Name = k
+
+		}
+
+		m[OauthTokenType(k)] = &OauthTokenTypeService{
+			Type:          OauthTokenType(k),
+			Config:        v,
+			Container:     container,
+			EncodeDecoder: crypto.NewTokenEncodeDecoder(v.Encoder),
+			Validator:     crypto.NewTokenValidator(v.Validator),
+		}
 	}
+	return m
 }
 
 //

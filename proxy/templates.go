@@ -24,6 +24,7 @@ const (
 	TemplateNameStatus      TemplateName = "status"
 	TemplateNameUserProfile TemplateName = "user-profile"
 	TemplateNameError       TemplateName = "error"
+	TemplateNameTelegram    TemplateName = "telegram"
 
 	TemplateContextKeyRequest             TemplateContextKey = http.TemplateContextKeyRequest
 	TemplateContextKeyRequestId           TemplateContextKey = http.TemplateContextKeyRequestId
@@ -37,6 +38,7 @@ const (
 	TemplateContextKeyProviders           TemplateContextKey = "providers"
 	TemplateContextKeyProvider            TemplateContextKey = "provider"
 	TemplateContextKeyProviderApplication TemplateContextKey = "providerApplication"
+	TemplateContextKeyTelegram            TemplateContextKey = "telegram"
 )
 
 var (
@@ -64,6 +66,9 @@ var (
 	//go:embed templates/error.html
 	TemplateError string
 
+	//go:embed templates/telegram.html
+	TemplateTelegram string
+
 	Templates = map[string]string{
 		string(TemplateNameDocument):    TemplateDocument,
 		string(TemplateNameSignin):      TemplateSignin,
@@ -72,6 +77,7 @@ var (
 		string(TemplateNameStatus):      TemplateStatus,
 		string(TemplateNameUserProfile): TemplateUserProfile,
 		string(TemplateNameError):       TemplateError,
+		string(TemplateNameTelegram):    TemplateTelegram,
 	}
 )
 

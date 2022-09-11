@@ -10,3 +10,4 @@
 /.tmux
 .cookie-jar
 *.config.yml
+/.env

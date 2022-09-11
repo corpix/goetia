@@ -20,13 +20,13 @@ type (
 		Label       string `yaml:"label"`
 		Description string `yaml:"description"`
 
-		Token        *OauthTokenConfig                          `yaml:"token"`
+		Tokens       OauthTokenConfigs                          `yaml:"tokens"`
 		Applications map[string]*ProviderOauthApplicationConfig `yaml:"applications"`
 		Paths        map[OauthHandlerPathName]OauthHandlerPath  `yaml:"paths"`
 	}
 	ProviderOauth struct {
 		Config       *ProviderOauthConfig
-		TokenService *OauthTokenService
+		TokenService OauthTokenService
 		Applications map[string]*ProviderOauthApplication
 	}
 
@@ -62,8 +62,8 @@ func (c *ProviderOauthConfig) Default() {
 	if c.Description == "" {
 		c.Description = "OAuth2 provider"
 	}
-	if c.Token == nil {
-		c.Token = &OauthTokenConfig{}
+	if len(c.Tokens) == 0 {
+		c.Tokens = OauthTokenConfigs{}
 	}
 	if c.Applications == nil {
 		c.Applications = map[string]*ProviderOauthApplicationConfig{}
@@ -90,6 +90,16 @@ func (c *ProviderOauthConfig) Validate() error {
 	for k, v := range c.Paths {
 		if len(v) == 0 {
 			return errors.Errorf("path %q should not be empty", k)
+		}
+	}
+	for _, k := range []OauthTokenType{
+		OauthTokenTypeCode,
+		OauthTokenTypeAccess,
+		OauthTokenTypeRefresh,
+	} {
+		_, ok := c.Tokens[string(k)]
+		if !ok {
+			return errors.Errorf("configuration for %q token type is required", k)
 		}
 	}
 	return nil
@@ -181,12 +191,12 @@ func (a *ProviderOauthApplication) UserProfileExpandRemap(profile *UserProfile) 
 
 //
 
-func (c *ProviderOauth) GetToken(tokenType OauthTokenType, tokenBytes []byte) (*OauthToken, error) {
-	token, err := c.TokenService.Decode(tokenBytes)
+func (c *ProviderOauth) GetToken(typ OauthTokenType, rawToken []byte) (*OauthToken, error) {
+	token, err := c.TokenService.Decode(typ, rawToken)
 	if err != nil {
 		return nil, err
 	}
-	err = c.TokenService.Validate(tokenType, token)
+	err = c.TokenService.Validate(typ, token)
 	if err != nil {
 		return nil, err
 	}
@@ -247,6 +257,89 @@ func (c *ProviderOauth) splitAuthToken(h http.Header) []byte {
 	return []byte(tokenParts[len(tokenParts)-1])
 }
 
+func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http.Request) *url.URL {
+	app, err := c.Application(r.URL.Query())
+	if err != nil {
+		panic(err)
+	}
+
+	rq := r.URL.Query()
+	requestedRedirectUri := rq.Get(string(OauthParameterRedirectUri))
+	configuredRedirectUri := app.RediretUri().String()
+	if requestedRedirectUri != configuredRedirectUri {
+		panic(errors.Errorf(
+			"application %q requested redirect uri %q does not match configured %q",
+			app.Id(),
+			requestedRedirectUri,
+			configuredRedirectUri,
+		))
+	}
+
+	//
+
+	code := c.TokenService.New(OauthTokenTypeCode)
+	// NOTE: sessionId must be string here, otherwise
+	// it might be base64 encoded encoded by subsequent marshaler
+	code.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
+	code.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+
+	codeBytes := c.TokenService.MustEncode(OauthTokenTypeCode, code)
+
+	//
+
+	u := *app.RediretUri()
+	q := u.Query()
+	if state := rq.Get(string(OauthParameterState)); state != "" {
+		// TODO: should we yell on the empty state query param?
+		q.Set(string(OauthParameterState), state)
+	}
+	q.Set(string(OauthParameterCode), string(codeBytes))
+	u.RawQuery = q.Encode()
+
+	return &u
+}
+
+func (c *ProviderOauth) Token(r *http.Request) *OauthTokenResponse {
+	err := r.ParseForm()
+	if err != nil {
+		panic(err)
+	}
+
+	//
+
+	code, err := c.GetToken(OauthTokenTypeCode, []byte(r.Form.Get(string(OauthParameterCode))))
+	if err != nil {
+		panic(err)
+	}
+	sessionId, err := c.GetSessionId(code)
+	if err != nil {
+		panic(err)
+	}
+	app, err := c.ApplicationById(code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+	if err != nil {
+		panic(err)
+	}
+
+	//
+
+	accessToken := c.TokenService.New(OauthTokenTypeAccess)
+	accessToken.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
+	accessToken.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+	accessTokenBytes := c.TokenService.MustEncode(OauthTokenTypeAccess, accessToken)
+
+	refreshToken := c.TokenService.New(OauthTokenTypeRefresh)
+	refreshToken.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
+	refreshToken.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+	refreshTokenBytes := c.TokenService.MustEncode(OauthTokenTypeRefresh, refreshToken)
+
+	return &OauthTokenResponse{
+		AccessToken:  string(accessTokenBytes),
+		RefreshToken: string(refreshTokenBytes),
+		Type:         string(OauthTokenTypeAccess),
+	}
+
+}
+
 func (c *ProviderOauth) Mount(router *http.Router) {
 	di.MustInvoke(di.Default, func(
 		t *template.Template,
@@ -300,94 +393,18 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				if profile == nil {
 					return
 				}
-
-				//
-
-				app, err := c.Application(r.URL.Query())
-				if err != nil {
-					panic(err)
-				}
-
 				sessionId, err := sessionService.Store.Id(r)
 				if err != nil {
 					panic(err)
 				}
 
-				rq := r.URL.Query()
-				requestedRedirectUri := rq.Get(string(OauthParameterRedirectUri))
-				configuredRedirectUri := app.RediretUri().String()
-				if requestedRedirectUri != configuredRedirectUri {
-					panic(errors.Errorf(
-						"application %q requested redirect uri %q does not match configured %q",
-						app.Id(),
-						requestedRedirectUri,
-						configuredRedirectUri,
-					))
-				}
-
-				//
-
-				code := c.TokenService.New(OauthTokenTypeCode)
-				// NOTE: sessionId must be string here, otherwise
-				// it might be base64 encoded encoded by subsequent marshaler
-				code.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
-				code.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
-
-				codeBytes := c.TokenService.MustEncode(code)
-
-				//
-
-				u := *app.RediretUri()
-				q := u.Query()
-				if state := rq.Get(string(OauthParameterState)); state != "" {
-					// TODO: should we yell on the empty state query param?
-					q.Set(string(OauthParameterState), state)
-				}
-				q.Set(string(OauthParameterCode), string(codeBytes))
-				u.RawQuery = q.Encode()
-
-				//
-
-				http.Redirect(w, r, u.String(), http.StatusFound)
+				http.Redirect(w, r, c.CodeUrl(sessionId, w, r).String(), http.StatusFound)
 			}).
 			Methods(http.MethodPost)
 
 		router.
 			HandleFunc(c.Path(OauthHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
-				err := r.ParseForm()
-				if err != nil {
-					panic(err)
-				}
-
-				//
-
-				code, err := c.GetToken(OauthTokenTypeCode, []byte(r.Form.Get(string(OauthParameterCode))))
-				if err != nil {
-					panic(err)
-				}
-				sessionId, err := c.GetSessionId(code)
-				if err != nil {
-					panic(err)
-				}
-				app, err := c.ApplicationById(code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
-				if err != nil {
-					panic(err)
-				}
-
-				//
-
-				token := c.TokenService.New(OauthTokenTypeAccess)
-				token.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
-				token.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
-				tokenBytes := c.TokenService.MustEncode(token)
-
-				resBytes, err := json.Marshal(struct {
-					Token string `json:"access_token"`
-					Type  string `json:"token_type"`
-				}{
-					Token: string(tokenBytes),
-					Type:  string(OauthTokenTypeAccess),
-				})
+				resBytes, err := json.Marshal(c.Token(r))
 				if err != nil {
 					panic(err)
 				}
@@ -456,7 +473,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 func NewProviderOauth(c *ProviderOauthConfig) *ProviderOauth {
 	provider := &ProviderOauth{
 		Config:       c,
-		TokenService: NewOauthTokenService(c.Token),
+		TokenService: NewOauthTokenService(c.Tokens),
 		Applications: map[string]*ProviderOauthApplication{},
 	}
 

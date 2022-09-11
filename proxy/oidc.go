@@ -3,6 +3,7 @@ package proxy
 type (
 	OidcHandlerPathName string
 	OidcHandlerPath     string
+	OidcTokenType       string
 )
 
 const (
@@ -19,10 +20,16 @@ const (
 	OidcHandlerPathValidate  OidcHandlerPath = OidcHandlerPath(OauthHandlerPathValidate)
 	OidcHandlerPathDiscovery OidcHandlerPath = "/discovery"
 	OidcHandlerPathJwks      OidcHandlerPath = "/jwks"
+
+	OidcTokenTypeCode    OidcTokenType = OidcTokenType(OauthTokenTypeCode)
+	OidcTokenTypeAccess  OidcTokenType = OidcTokenType(OauthTokenTypeAccess)
+	OidcTokenTypeRefresh OidcTokenType = OidcTokenType(OauthTokenTypeRefresh)
+	OidcTokenTypeId      OidcTokenType = "id_token"
 )
 
 var (
 	OidcHandlerPathNames = []OidcHandlerPathName{
+		// TODO: tokeinfo is required https://developers.google.com/identity/sign-in/web/backend-auth
 		OidcHandlerPathNameAuthorize,
 		OidcHandlerPathNameToken,
 		OidcHandlerPathNameProfile,

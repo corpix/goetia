@@ -79,3 +79,25 @@ WARN [09-05|13:35:08] Failed to extract role                   logger=oauth.gene
 regarding =display-name=: for some reason it doesnt like =-= in key.
 
 <2022-09-07 Wed> ok, will use gojq to postprocess user profiles, so we could have clean grafana setup. done
+* TODO fix csrf validation of session was invalid
+#+begin_src console
+9:58PM WRN invalid session, created new error="failed to validate session" method=GET request-id=626d0b99-0969-48bd-9411-a391cb7e8a56 session={"header":{"valid-after":"2022-09-06T18:11:50Z","valid-before":"2022-09-07T18:11:50Z"},"payload":{"csrf-nonce":4732133495224656000,"user-profile":{"avatar-url":"https://avatars.githubusercontent.com/u/747362","connector":"basic","display-name":"Dmitry Moskowski","groups":"admin,owner","mail":"me@corpix.ru","name":"corpix"}}} url=/auth/
+9:58PM INF request code=200 duration=1.347273 method=GET request-id=626d0b99-0969-48bd-9411-a391cb7e8a56 url=/auth/ written=19012
+9:58PM WRN csrf token validation failed error="csrf token nonce does not match the expected nonce" expected-nonce=1287580923372519936 method=POST request-id=15aafedc-b6a4-4cf4-8b94-58d3bce8cf43 token={"header":{"valid-after":"2022-09-11T21:58:44.142865013Z","valid-before":"2022-09-12T21:58:44.142865013Z"},"payload":{"nonce":1287580923372519852,"path":"/auth/connectors/basic/"}} token-nonce=1287580923372519852 url=/auth/connectors/basic/
+#+end_src
+
+* TODO implement =id_token=
+OIDC (and gitea) requires this token to contain user information, not sure how it's signature qill be matched agains jwks, will see
+* TODO create telegram connector
+sign in with telegram, but not using telegram's oauth:
+- make a bot
+- add bot to group
+- list this groups in config (id's)
+- show user a link to bot with prepared =/start XXXX=
+- where =XXXX= is a signed token which serves a rendezvous point between server & client
+- client should listen for events from server on this rendezvous point, where it may receive a session
+
+polling should be enough on start (progressive interval degradation after 60s may be a smart move)
+
+** TODO gdk generalized token service
+required to created minimal signed strings

@@ -31,6 +31,11 @@ in stdenv.mkDerivation rec {
     export LANG="en_US.UTF-8"
     export NIX_PATH="nixpkgs=${nixpkgs}"
 
+    if [ -f .env ]
+    then
+      source .env
+    fi
+
     if [ ! -z "$PS1" ]
     then
       export SHELL="${shellWrapper}"

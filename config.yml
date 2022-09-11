@@ -91,12 +91,25 @@ proxy:
       #- oauth
       - oidc
     oauth:
-      token:
-        container:
-          type: jwt
-          jwt:
-            algorithm: hs512
-            key: aaaaaaaa
+      tokens:
+        code:
+          container:
+            type: jwt
+            jwt:
+              algorithm: hs512
+              key: aaaaaaaa
+        access:
+          container:
+            type: jwt
+            jwt:
+              algorithm: hs512
+              key: bbbbbbbb
+        refresh:
+          container:
+            type: jwt
+            jwt:
+              algorithm: hs512
+              key: cccccccc
       applications:
         app:
           label: "test app"
@@ -109,24 +122,55 @@ proxy:
       paths:
         profile: /userinfo
     oidc:
-      token:
-        container:
-          type: jwt
-          jwt:
-            algorithm: es512
-            key: |
-              -----BEGIN EC PRIVATE KEY-----
-              MIHcAgEBBEIB9hjt4SMz8Miwflpq3i+HqRD6DFG0NcBm4+TbleDWMW6eiNXHBU0U
-              XQa1l3kJX4CqH78JzuJzpUeKnpigUgbvY6mgBwYFK4EEACOhgYkDgYYABABAhfxS
-              q4IUhLztU3M5Yo+NdwqMDPnNMWm2LpgNdeJjpK/WKwbMH4x0Uxqwcp/VkwIHgrge
-              rzOoGaRBy3x8v/2ecQHegB0RfGWX0Wjnz3Hjew/qC4XXiJCZj0TrxQyLq4avy+2r
-              AU3XosZTvMTIn1IgRp7ARp+nDkKDRKdD/dvRvXiWsw==
-              -----END EC PRIVATE KEY-----
+      tokens:
+        code:
+          container:
+            type: jwt
+            jwt:
+              algorithm: es512
+              key: |
+                -----BEGIN EC PRIVATE KEY-----
+                MIHcAgEBBEIB9hjt4SMz8Miwflpq3i+HqRD6DFG0NcBm4+TbleDWMW6eiNXHBU0U
+                XQa1l3kJX4CqH78JzuJzpUeKnpigUgbvY6mgBwYFK4EEACOhgYkDgYYABABAhfxS
+                q4IUhLztU3M5Yo+NdwqMDPnNMWm2LpgNdeJjpK/WKwbMH4x0Uxqwcp/VkwIHgrge
+                rzOoGaRBy3x8v/2ecQHegB0RfGWX0Wjnz3Hjew/qC4XXiJCZj0TrxQyLq4avy+2r
+                AU3XosZTvMTIn1IgRp7ARp+nDkKDRKdD/dvRvXiWsw==
+                -----END EC PRIVATE KEY-----
+        access:
+          container:
+            type: jwt
+            jwt:
+              algorithm: es512
+              key: |
+                -----BEGIN EC PRIVATE KEY-----
+                MIHcAgEBBEIAV8ot2bQMeEv5/lkpfZKLKAajasFOgHYurbPmzzhV76+eL7CjAtRW
+                uYbX/Mf1QybMSuRxpybbVmXNGF+ePmoPdZSgBwYFK4EEACOhgYkDgYYABAGPQ8Kh
+                iH+jjYCOfVnk9UnwuyMGm03EAWHAlU1bLx/Nl7gujwK8OUrlfgAK+9EfUbvQvJ5v
+                Sp934k+N7YAAmQAi3gAD1sHz0xJr4vElrAmtC4zN/Zx007jl4zFH9Aapc+bM0BRt
+                E/d9CPR79+ktpLvdIppDTY9X5nn03WoNkuwXW/x3VA==
+                -----END EC PRIVATE KEY-----
+        refresh:
+          container:
+            type: jwt
+            jwt:
+              algorithm: es512
+              key: |
+                -----BEGIN EC PRIVATE KEY-----
+                MIHcAgEBBEIB9w09n7rLGxf//w+rNLYKypuz7HRvjljW9xqCaMbGEqFArtK2hVI6
+                54NV48g4VI02gSoXPNRfCg9OLBKC1eK3VkOgBwYFK4EEACOhgYkDgYYABAA31dHg
+                EQDO0YX/BiH8byCfu8vbaRyvxgK/0jkziwkgJ7iyf0W+/cBotSeMAzrCiGvm2Z0f
+                /n+8vfRa6VEn3rNbqgF5CWUR/m3/3VFVGCo3MrZ0LyzEbZgK9o53hhALieHVZK80
+                8TmQj6d+5pHHZqzJimvWY5pbjoe6Q6UUwJ4SM7Y0qw==
+                -----END EC PRIVATE KEY-----
+
       applications:
         app:
           label: "test app"
           key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
+          # grafana
+          # redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
+          # gitea
+          redirect-uri: "http://127.0.0.1:3000/user/oauth2/goetia/callback"
           profile:
             map:
               connector: ""

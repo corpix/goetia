@@ -25,7 +25,8 @@ type (
 		Enable []string `yaml:"enable"`
 		// Slack  *ConnectorSlackConfig  `yaml:"slack"`
 		// Oidc   *ConnectorOidcConfig   `yaml:"oidc"`
-		Basic *ConnectorBasicConfig `yaml:"basic"`
+		Basic    *ConnectorBasicConfig    `yaml:"basic"`
+		Telegram *ConnectorTelegramConfig `yaml:"telegram"`
 		// Bypass *ConnectorBypassConfig `yaml:"bypass"`
 	}
 	ConnectorConfig struct {
@@ -79,7 +80,8 @@ const (
 
 	// ConnectorNameSlack  ConnectorName = "slack"
 	// ConnectorNameOidc   ConnectorName = "oidc"
-	ConnectorNameBasic ConnectorName = "basic"
+	ConnectorNameBasic    ConnectorName = "basic"
+	ConnectorNameTelegram ConnectorName = "telegram"
 	// ConnectorNameBypass ConnectorName = "bypass"
 
 	ProviderNameOauth ProviderName = "oauth"
@@ -90,13 +92,15 @@ var (
 	ConnectorNames = map[string]struct{}{
 		// string(ConnectorNameSlack):  {},
 		// string(ConnectorNameOidc):   {},
-		string(ConnectorNameBasic): {},
+		string(ConnectorNameBasic):    {},
+		string(ConnectorNameTelegram): {},
 		// string(ConnectorNameBypass): {},
 	}
 
 	// _ Connector = &ConnectorSlack{}
 	// _ Connector = &ConnectorOidc{}
 	_ Connector = &ConnectorBasic{}
+	_ Connector = &ConnectorTelegram{}
 	// _ Connector = &ConnectorBypass{}
 
 	ProviderNames = map[string]struct{}{
@@ -148,6 +152,9 @@ func (c *ConnectorsConfig) Default() {
 	// }
 	if c.Basic == nil && enabled[ConnectorNameBasic] {
 		c.Basic = &ConnectorBasicConfig{}
+	}
+	if c.Telegram == nil && enabled[ConnectorNameTelegram] {
+		c.Telegram = &ConnectorTelegramConfig{}
 	}
 	// if c.Bypass == nil && enabled[ConnectorNameBypass] {
 	// 	c.Bypass = &ConnectorBypassConfig{}
@@ -208,6 +215,8 @@ func NewConnectors(c *ConnectorsConfig) []Connector {
 		// case ConnectorNameOidc:
 		case ConnectorNameBasic:
 			connectors[n] = NewConnectorBasic(c.Basic)
+		case ConnectorNameTelegram:
+			connectors[n] = NewConnectorTelegram(c.Telegram)
 			// case ConnectorNameBypass:
 		}
 	}

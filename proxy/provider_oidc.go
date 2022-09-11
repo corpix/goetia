@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 
 	"github.com/corpix/gdk/crypto"
@@ -139,18 +140,30 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 
 func NewProviderOidc(c *ProviderOidcConfig) *ProviderOidc {
 	oauthProvider := NewProviderOauth(c.ProviderOauthConfig)
-	if _, ok := oauthProvider.TokenService.Container.(*crypto.TokenContainerJwt); !ok {
-		panic("OIDC is working only with JWT tokens")
-	}
-	if !oauthProvider.TokenService.Container.Cap().Has(crypto.TokenCapPubKeyCrypto) {
-		panic("OIDC requires JWT with public key cryptography")
+	tokenKeys := make([]*crypto.TokenJwtKey, len(oauthProvider.TokenService))
+
+	n := 0
+	for _, s := range oauthProvider.TokenService {
+		if _, ok := s.Container.(*crypto.TokenContainerJwt); !ok {
+			panic(fmt.Sprintf(
+				"found non JWT token type for %q, OIDC is working only with JWT tokens",
+				s.Type,
+			))
+		}
+		if !s.Container.Cap().Has(crypto.TokenCapPubKeyCrypto) {
+			panic(fmt.Sprintf(
+				"found token %q not using public key cryptography, OIDC requires public key cryptography",
+				s.Type,
+			))
+		}
+
+		tokenKeys[n] = s.Container.(*crypto.TokenContainerJwt).Key
+		n++
 	}
 
 	provider := &ProviderOidc{
 		ProviderOauth: oauthProvider,
-		Jwks: crypto.TokenJwtKeySet{
-			Keys: []*crypto.TokenJwtKey{oauthProvider.TokenService.Container.(*crypto.TokenContainerJwt).Key},
-		},
+		Jwks:          crypto.TokenJwtKeySet{Keys: tokenKeys},
 	}
 	return provider
 }
