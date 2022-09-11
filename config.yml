@@ -23,12 +23,6 @@ http:
       default: "http://127.0.0.1:8082"
   csrf:
     enable: true
-    # TODO: looks like back propagation of the information about paths (where CSRF is not required) from providers will not be an easy walk
-    # we need to know prefix & paths inside provider + design some interface for main.go to get this information
-    # TODO: same applies to session middleware
-    # skip-paths:
-    #   /auth/providers/oauth/token: {}
-    #   /auth/providers/oidc/token: {}
     container:
       secretbox:
         key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
