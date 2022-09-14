@@ -8,6 +8,7 @@ import (
 
 	"github.com/itchyny/gojq"
 
+	"github.com/corpix/gdk/crypto"
 	"github.com/corpix/gdk/di"
 	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
@@ -204,7 +205,7 @@ func (c *ProviderOauth) GetToken(typ OauthTokenType, rawToken []byte) (*OauthTok
 }
 
 func (c *ProviderOauth) GetSessionId(token *OauthToken) ([]byte, error) {
-	sessionId, ok := token.GetString(string(OauthTokenPayloadKeySessionId))
+	sessionId, ok := token.GetString(OauthTokenMapKeySessionId)
 	if !ok {
 		return nil, errors.New("no session id inside code token")
 	}
@@ -280,8 +281,8 @@ func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http
 	code := c.TokenService.New(OauthTokenTypeCode)
 	// NOTE: sessionId must be string here, otherwise
 	// it might be base64 encoded encoded by subsequent marshaler
-	code.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
-	code.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+	code.Set(OauthTokenMapKeyApplicationId, app.Id())
+	code.Set(OauthTokenMapKeySessionId, string(sessionId))
 
 	codeBytes := c.TokenService.MustEncode(OauthTokenTypeCode, code)
 
@@ -299,8 +300,8 @@ func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http
 	return &u
 }
 
-func (c *ProviderOauth) Token(r *http.Request) *OauthTokenResponse {
-	err := r.ParseForm()
+func (c *ProviderOauth) CodeLoad(r *http.Request) ([]byte, *ProviderOauthApplication) {
+  err := r.ParseForm()
 	if err != nil {
 		panic(err)
 	}
@@ -315,21 +316,30 @@ func (c *ProviderOauth) Token(r *http.Request) *OauthTokenResponse {
 	if err != nil {
 		panic(err)
 	}
-	app, err := c.ApplicationById(code.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+	app, err := c.ApplicationById(code.MustGetString(OauthTokenMapKeyApplicationId))
 	if err != nil {
 		panic(err)
 	}
 
+  return sessionId, app
+}
+
+func (c *ProviderOauth) Token(sessionId []byte, app *ProviderOauthApplication) *OauthTokenResponse {
+  appId := app.Id()
+  audience := []string{appId}
+
 	//
 
 	accessToken := c.TokenService.New(OauthTokenTypeAccess)
-	accessToken.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
-	accessToken.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+  accessToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
+	accessToken.Set(OauthTokenMapKeyApplicationId, appId)
+	accessToken.Set(OauthTokenMapKeySessionId, string(sessionId))
 	accessTokenBytes := c.TokenService.MustEncode(OauthTokenTypeAccess, accessToken)
 
 	refreshToken := c.TokenService.New(OauthTokenTypeRefresh)
-	refreshToken.Set(string(OauthTokenPayloadKeyApplicationId), app.Id())
-	refreshToken.Set(string(OauthTokenPayloadKeySessionId), string(sessionId))
+  refreshToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
+	refreshToken.Set(OauthTokenMapKeyApplicationId, appId)
+	refreshToken.Set(OauthTokenMapKeySessionId, string(sessionId))
 	refreshTokenBytes := c.TokenService.MustEncode(OauthTokenTypeRefresh, refreshToken)
 
 	return &OauthTokenResponse{
@@ -337,7 +347,6 @@ func (c *ProviderOauth) Token(r *http.Request) *OauthTokenResponse {
 		RefreshToken: string(refreshTokenBytes),
 		Type:         string(OauthTokenTypeAccess),
 	}
-
 }
 
 func (c *ProviderOauth) Mount(router *http.Router) {
@@ -404,7 +413,8 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 
 		router.
 			HandleFunc(c.Path(OauthHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
-				resBytes, err := json.Marshal(c.Token(r))
+        sessionId, app := c.CodeLoad(r)
+				resBytes, err := json.Marshal(c.Token(sessionId, app))
 				if err != nil {
 					panic(err)
 				}
@@ -422,7 +432,7 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 				if err != nil {
 					panic(err)
 				}
-				app, err := c.ApplicationById(token.MustGetString(string(OauthTokenPayloadKeyApplicationId)))
+				app, err := c.ApplicationById(token.MustGetString(OauthTokenMapKeyApplicationId))
 				if err != nil {
 					panic(err)
 				}

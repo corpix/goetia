@@ -1,9 +1,19 @@
 package proxy
 
+import (
+	"github.com/corpix/gdk/crypto"
+)
+
 type (
 	OidcHandlerPathName string
 	OidcHandlerPath     string
-	OidcTokenType       string
+	OidcToken           = OauthToken
+	OidcTokenResponse   struct {
+		OauthTokenResponse `json:",inline"`
+		IdToken            string `json:"id_token,omitempty"`
+	}
+	OidcTokenMapKey = crypto.TokenMapKey
+	OidcTokenType   string
 )
 
 const (
@@ -21,15 +31,17 @@ const (
 	OidcHandlerPathDiscovery OidcHandlerPath = "/discovery"
 	OidcHandlerPathJwks      OidcHandlerPath = "/jwks"
 
+	OidcTokenMapKeyNickname OauthTokenMapKey = "nickname"
+	OidcTokenMapKeyEmail    OauthTokenMapKey = "email"
+
 	OidcTokenTypeCode    OidcTokenType = OidcTokenType(OauthTokenTypeCode)
 	OidcTokenTypeAccess  OidcTokenType = OidcTokenType(OauthTokenTypeAccess)
 	OidcTokenTypeRefresh OidcTokenType = OidcTokenType(OauthTokenTypeRefresh)
-	OidcTokenTypeId      OidcTokenType = "id_token"
+	OidcTokenTypeId      OidcTokenType = "id"
 )
 
 var (
 	OidcHandlerPathNames = []OidcHandlerPathName{
-		// TODO: tokeinfo is required https://developers.google.com/identity/sign-in/web/backend-auth
 		OidcHandlerPathNameAuthorize,
 		OidcHandlerPathNameToken,
 		OidcHandlerPathNameProfile,

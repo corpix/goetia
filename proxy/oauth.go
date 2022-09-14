@@ -18,10 +18,10 @@ type (
 	OauthToken         = http.Token
 	OauthTokenResponse struct {
 		Type         string `json:"token_type"`
-		AccessToken  string `json:"access_token"`
+		AccessToken  string `json:"access_token,omitempty"`
 		RefreshToken string `json:"refresh_token,omitempty"`
 	}
-	OauthTokenPayloadKey    string
+	OauthTokenMapKey        = crypto.TokenMapKey
 	OauthTokenType          string
 	OauthTokenContainer     crypto.TokenContainer
 	OauthTokenEncodeDecoder crypto.TokenEncodeDecoder
@@ -60,9 +60,9 @@ const (
 	OauthParameterErrorDescription OauthParameterName = "error_description"
 	OauthParameterGrantType        OauthParameterName = "grant_type"
 
-	OauthTokenPayloadKeyType          OauthTokenPayloadKey = "type"
-	OauthTokenPayloadKeyApplicationId OauthTokenPayloadKey = "application-id"
-	OauthTokenPayloadKeySessionId     OauthTokenPayloadKey = "session-id"
+	OauthTokenMapKeyType          OauthTokenMapKey = "type"
+	OauthTokenMapKeyApplicationId OauthTokenMapKey = "application-id"
+	OauthTokenMapKeySessionId     OauthTokenMapKey = "session-id"
 
 	OauthTokenTypeCode    OauthTokenType = "code"
 	OauthTokenTypeAccess  OauthTokenType = "access"
@@ -88,7 +88,7 @@ var (
 
 func (srv OauthTokenService) New(typ OauthTokenType) *OauthToken {
 	token := NewOauthToken(srv[typ].Config)
-	token.Set(string(OauthTokenPayloadKeyType), typ)
+	token.Set(OauthTokenMapKeyType, typ)
 	return token
 }
 
@@ -140,7 +140,7 @@ func (srv OauthTokenService) Validate(typ OauthTokenType, t *OauthToken) error {
 		return err
 	}
 
-	rawTyp, ok := t.Get(string(OauthTokenPayloadKeyType))
+	rawTyp, ok := t.Get(OauthTokenMapKeyType)
 	if !ok {
 		return log.NewEventDecoratorError(
 			errors.New("token has no type in the payload"),
@@ -182,13 +182,12 @@ func (srv OauthTokenService) Validate(typ OauthTokenType, t *OauthToken) error {
 func NewOauthTokenService(c OauthTokenConfigs) OauthTokenService {
 	m := make(OauthTokenService, len(c))
 	for k, v := range c {
-		container := http.NewTokenContainer(v.Container)
+		container := crypto.NewTokenContainer(v.Container)
 		// TODO: maybe we could find a way to treat container a blackbox, not depending on the internal structure?
 		// this could be achieved using options, but requires gdk api changes (crypto.NewTokenContainer)
 		switch cont := container.(type) {
 		case *crypto.TokenContainerJwt:
 			cont.Key.Name = k
-
 		}
 
 		m[OauthTokenType(k)] = &OauthTokenTypeService{

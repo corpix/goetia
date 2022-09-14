@@ -7,6 +7,7 @@ import (
 
 	"github.com/corpix/gdk/crypto"
 	"github.com/corpix/gdk/di"
+	"github.com/corpix/gdk/errors"
 	"github.com/corpix/gdk/http"
 	"github.com/corpix/gdk/template"
 )
@@ -57,15 +58,45 @@ func (c *ProviderOidcConfig) Default() {
 	}
 }
 
+func (c *ProviderOidcConfig) Validate() error {
+	for _, k := range []OidcTokenType{
+		// NOTE: checked during oauth provider config validation
+		// OidcTokenTypeCode,
+		// OidcTokenTypeAccess,
+		// OidcTokenTypeRefresh,
+		OidcTokenTypeId,
+	} {
+		_, ok := c.Tokens[string(k)]
+		if !ok {
+			return errors.Errorf("configuration for %q token type is required", k)
+		}
+	}
+	return nil
+}
+
 //
 
 func (c *ProviderOidc) Path(name OidcHandlerPathName) string {
 	return string(c.Config.Paths[OauthHandlerPathName(name)])
 }
 
-func (c *ProviderOidc) Mount(router *http.Router) {
-	c.ProviderOauth.Mount(router)
+func (c *ProviderOidc) Token(discover *ProviderOidcDiscovery, profile *UserProfile, sessionId []byte, app *ProviderOauthApplication) *OidcTokenResponse {
+	oauthTokenResp := c.ProviderOauth.Token(sessionId, app)
+	idToken := c.TokenService.New(OauthTokenType(OidcTokenTypeId))
+	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, []string{app.Id()})
+	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeyIssuer, discover.Issuer)
+	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeySubject, profile.Name)
+	idToken.Header.Meta.Set(OidcTokenMapKeyNickname, profile.Name)
+	idToken.Header.Meta.Set(OidcTokenMapKeyEmail, profile.Mail)
+	idTokenBytes := c.TokenService.MustEncode(OauthTokenType(OidcTokenTypeId), idToken)
 
+	return &OidcTokenResponse{
+		OauthTokenResponse: *oauthTokenResp,
+		IdToken:            string(idTokenBytes),
+	}
+}
+
+func (c *ProviderOidc) Mount(router *http.Router) {
 	var (
 		authorizePath string
 		tokenPath     string
@@ -84,28 +115,32 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 		sessionService *http.SessionService,
 		headersService *UserProfileHeadersService,
 	) {
+		discovery := func(r *http.Request) *ProviderOidcDiscovery {
+			return &ProviderOidcDiscovery{
+				Issuer: h.Url(r.URL, func(u *url.URL) {
+					u.Host = r.Host
+					u.Path = "/"
+				}).String(),
+				AuthorizationEndpoint: h.Url(r.URL, func(u *url.URL) {
+					u.Host = r.Host
+					u.Path = authorizePath
+				}).String(),
+				TokenEndpoint: h.Url(r.URL, func(u *url.URL) {
+					u.Host = r.Host
+					u.Path = tokenPath
+				}).String(),
+				JwksUri: h.Url(r.URL, func(u *url.URL) {
+					u.Host = r.Host
+					u.Path = jwksPath
+				}).String(),
+			}
+		}
+
 		router.
 			HandleFunc(c.Path(OidcHandlerPathNameDiscovery), func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
 
-				err := json.NewEncoder(w).Encode(&ProviderOidcDiscovery{
-					Issuer: h.Url(r.URL, func(u *url.URL) {
-						u.Host = r.Host
-						u.Path = "/"
-					}).String(),
-					AuthorizationEndpoint: h.Url(r.URL, func(u *url.URL) {
-						u.Host = r.Host
-						u.Path = authorizePath
-					}).String(),
-					TokenEndpoint: h.Url(r.URL, func(u *url.URL) {
-						u.Host = r.Host
-						u.Path = tokenPath
-					}).String(),
-					JwksUri: h.Url(r.URL, func(u *url.URL) {
-						u.Host = r.Host
-						u.Path = jwksPath
-					}).String(),
-				})
+				err := json.NewEncoder(w).Encode(discovery(r))
 				if err != nil {
 					panic(err)
 				}
@@ -124,6 +159,34 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 			}).
 			Name(string(OidcHandlerPathNameJwks)).
 			Methods(http.MethodGet)
+
+		router.
+			HandleFunc(c.Path(OidcHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
+				sessionId, app := c.CodeLoad(r)
+				session, err := sessionService.Store.Load(sessionId)
+				if err != nil {
+					panic(err)
+				}
+				resBytes, err := json.Marshal(c.Token(
+					discovery(r),
+					SessionUserProfileGet(session),
+					sessionId,
+					app,
+				))
+				if err != nil {
+					panic(err)
+				}
+
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set(http.HeaderContentType, http.MimeTextJson)
+				w.Write(resBytes)
+			}).
+			Name(string(OidcHandlerPathNameToken)).
+			Methods(http.MethodPost)
+
+		// NOTE: registering routes after because:
+		// for some reason registering same route does not override existing (sic!)
+		c.ProviderOauth.Mount(router)
 
 		//
 

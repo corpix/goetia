@@ -55,8 +55,8 @@ const (
 
 	UserRetpathQueryKey = "retpath"
 
-	SessionPayloadKeyUserProfile http.SessionPayloadKey = "user-profile"
-	SessionPayloadKeyUserRetpath http.SessionPayloadKey = "user-retpath"
+	SessionMapKeyUserProfile http.SessionMapKey = "user-profile"
+	SessionMapKeyUserRetpath http.SessionMapKey = "user-retpath"
 )
 
 var (
@@ -216,7 +216,7 @@ func NewUserProfileRules(c []*RuleConfig) UserProfileRules {
 }
 
 func SessionUserProfileGet(session *http.Session) *UserProfile {
-	rawProfile, ok := session.Get(string(SessionPayloadKeyUserProfile))
+	rawProfile, ok := session.Get(SessionMapKeyUserProfile)
 	if !ok {
 		return nil
 	}
@@ -262,11 +262,11 @@ func SessionUserProfileSet(session *http.Session, profile *UserProfile, rules ..
 			panic(err)
 		}
 	}
-	session.Set(string(SessionPayloadKeyUserProfile), m)
+	session.Set(SessionMapKeyUserProfile, m)
 }
 
 func SessionUserProfileDel(session *http.Session) {
-	session.Del(string(SessionPayloadKeyUserProfile))
+	session.Del(SessionMapKeyUserProfile)
 }
 
 //
@@ -291,7 +291,7 @@ func Retpath(w http.ResponseWriter, r *http.Request, fallback string) {
 }
 
 func SessionUserRetpathGet(session *http.Session) string {
-	rawRetpath, ok := session.Get(string(SessionPayloadKeyUserRetpath))
+	rawRetpath, ok := session.Get(SessionMapKeyUserRetpath)
 	if !ok {
 		return ""
 	}
@@ -300,11 +300,11 @@ func SessionUserRetpathGet(session *http.Session) string {
 }
 
 func SessionUserRetpathSet(session *http.Session, retpath string) {
-	session.Set(string(SessionPayloadKeyUserRetpath), retpath)
+	session.Set(SessionMapKeyUserRetpath, retpath)
 }
 
 func SessionUserRetpathDel(session *http.Session) {
-	session.Del(string(SessionPayloadKeyUserRetpath))
+	session.Del(SessionMapKeyUserRetpath)
 }
 
 func RequestUserRetpathGet(r *http.Request) string {

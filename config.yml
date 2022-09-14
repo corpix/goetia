@@ -77,8 +77,14 @@ proxy:
           groups: ["admin", "owner"]
           display-name: "Dmitry Moskowski"
           avatar-url: "https://avatars.githubusercontent.com/u/747362"
-    # bypass:
-    #   label: "bypass proxy auth"
+
+    telegram:
+      groups: [-647425492]
+      bot-token: "5659812166:AAHTsJIg-1ie3rzI8u7LvuicakkpmczTCgY"
+      token:
+        container:
+          secretbox:
+            key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
   providers:
     enable:
@@ -156,7 +162,19 @@ proxy:
                 /n+8vfRa6VEn3rNbqgF5CWUR/m3/3VFVGCo3MrZ0LyzEbZgK9o53hhALieHVZK80
                 8TmQj6d+5pHHZqzJimvWY5pbjoe6Q6UUwJ4SM7Y0qw==
                 -----END EC PRIVATE KEY-----
-
+        id:
+          container:
+            type: jwt
+            jwt:
+              algorithm: es512
+              key: |
+                -----BEGIN EC PRIVATE KEY-----
+                MIHcAgEBBEIAjD0gUsn1sMDbx6/V6mrDJIsYz349emY9Ctp0+1AGDgWPwABnUnyp
+                mMnPkbUl7RN64Ugac8IWxHo81Dy8urz73Q6gBwYFK4EEACOhgYkDgYYABAEQIvcR
+                ksZsMupNV7xAdrkm1Ru8pgw7xMXOG0V7Hbx8Onp9lS6M0pn6IPZEsjN5L5VkuVMH
+                P53rsL4voNaev3lXlwA/YqPZBOHQes1D/pxZrTWKVcnErld5taZYgzYXZB0Hvp/v
+                qUhfnU1umoduSXjm6qkYS3GF86i/4Y4N5JCYZsgv9w==
+                -----END EC PRIVATE KEY-----
       applications:
         app:
           label: "test app"

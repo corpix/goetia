@@ -3,8 +3,9 @@ module github.com/corpix/goetia
 go 1.18
 
 require (
-	github.com/corpix/gdk v0.0.0-20220907144700-ca8b15068016
+	github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a
 	github.com/davecgh/go-spew v1.1.1
+	github.com/go-pkgz/expirable-cache/v2 v2.0.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 	github.com/itchyny/gojq v0.12.9
 )
@@ -25,7 +26,6 @@ require (
 	github.com/cristalhq/jwt/v4 v4.0.1 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
-	github.com/go-pkgz/expirable-cache/v2 v2.0.0 // indirect
 	github.com/go-redis/redis v6.15.6+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
