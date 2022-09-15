@@ -90,8 +90,8 @@ github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a h1:Rj1QD1zQKAJUww0ChFd7
 github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a/go.mod h1:p5qpvYboYzrVJwlMTMRuBDYySsKv0Qtf1FkBAyhPFBs=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867 h1:p8xl1k+w/dwWgVdpS3yfSTQd7u1YH0N8CHkwCKhF/wQ=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867/go.mod h1:HdU6GMWeMeXB9BvqVt4sLIZp/PinhYptn11vpA13URw=
-github.com/corpix/yaml v0.0.0-20220706182535-91862f77ddd0 h1:YUfvTTt9lizAkhBcEY3YcZl5vBXl4G16+AzHRFbeJvA=
-github.com/corpix/yaml v0.0.0-20220706182535-91862f77ddd0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
+github.com/corpix/yaml v0.0.0-20220915223554-1dedc5fdfc2b h1:osXyZ7T9ydYGqDFVWeo6WmqKP8So4qFPir6oPRisE4Q=
+github.com/corpix/yaml v0.0.0-20220915223554-1dedc5fdfc2b/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/cpuguy83/go-md2man/v2 v2.0.2 h1:p1EgwI/C7NhT0JmVkwCD2ZBK8j4aeHQX2pMHHBfMQ6w=
 github.com/cpuguy83/go-md2man/v2 v2.0.2/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=

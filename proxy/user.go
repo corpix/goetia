@@ -3,7 +3,6 @@ package proxy
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/itchyny/gojq"
 
@@ -124,7 +123,7 @@ func (p *UserProfile) Map() map[string]interface{} {
 		UserProfileConnector:   p.Connector,
 		UserProfileName:        p.Name,
 		UserProfileMail:        p.Mail,
-		UserProfileGroups:      strings.Join(p.Groups, ","),
+		UserProfileGroups:      p.Groups,
 		UserProfileDisplayName: p.DisplayName,
 		UserProfileAvatarUrl:   p.AvatarUrl,
 	}
@@ -149,7 +148,7 @@ func (p *UserProfile) Remap(mapping map[string]string) map[string]interface{} {
 }
 
 // NOTE: it is working only with map[]interface{} because of asserts in gojq
-func UserProfileExpand(profile map[string]interface{}, expr *gojq.Query) interface{} {
+func UserProfileExpand(profile map[string]interface{}, expr *gojq.Query) map[string]interface{} {
 	iter := expr.Run(profile)
 	for {
 		v, ok := iter.Next()
@@ -159,7 +158,7 @@ func UserProfileExpand(profile map[string]interface{}, expr *gojq.Query) interfa
 		if err, ok := v.(error); ok {
 			panic(err)
 		}
-		return v
+		return v.(map[string]interface{})
 	}
 	panic("user profile expand expression returned nothing")
 }
@@ -220,26 +219,27 @@ func SessionUserProfileGet(session *http.Session) *UserProfile {
 	if !ok {
 		return nil
 	}
+	profile := rawProfile.(map[string]interface{})
 
-	profile := map[string]string{}
-	switch p := rawProfile.(type) {
-	case map[string]interface{}:
-		for k, v := range p {
-			profile[k] = v.(string)
+	rawGroups := profile[UserProfileGroups]
+	var groups []string
+	switch g := rawGroups.(type) {
+	case []interface{}:
+		groups = make([]string, len(g))
+		for n, v := range g {
+			groups[n] = v.(string)
 		}
-	case map[string]string:
-		profile = p
-	default:
-		panic(fmt.Sprintf("unsupported profile map type %T", rawProfile))
+	case []string:
+		groups = g
 	}
 
 	return &UserProfile{
-		Connector:   profile[UserProfileConnector],
-		Name:        profile[UserProfileName],
-		DisplayName: profile[UserProfileDisplayName],
-		Mail:        profile[UserProfileMail],
-		Groups:      strings.Split(profile[UserProfileGroups], ","),
-		AvatarUrl:   profile[UserProfileAvatarUrl],
+		Connector:   profile[UserProfileConnector].(string),
+		Name:        profile[UserProfileName].(string),
+		DisplayName: profile[UserProfileDisplayName].(string),
+		Mail:        profile[UserProfileMail].(string),
+		Groups:      groups,
+		AvatarUrl:   profile[UserProfileAvatarUrl].(string),
 	}
 }
 

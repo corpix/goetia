@@ -7,8 +7,11 @@ import (
 type (
 	OidcHandlerPathName string
 	OidcHandlerPath     string
-	OidcToken           = OauthToken
-	OidcTokenResponse   struct {
+
+	OidcParameterName string
+
+	OidcToken         = OauthToken
+	OidcTokenResponse struct {
 		OauthTokenResponse `json:",inline"`
 		IdToken            string `json:"id_token,omitempty"`
 	}
@@ -31,8 +34,20 @@ const (
 	OidcHandlerPathDiscovery OidcHandlerPath = "/discovery"
 	OidcHandlerPathJwks      OidcHandlerPath = "/jwks"
 
+	OidcParameterClientId         OidcParameterName = OidcParameterName(OauthParameterClientId)
+	OidcParameterClientKey        OidcParameterName = OidcParameterName(OauthParameterClientKey)
+	OidcParameterRedirectUri      OidcParameterName = OidcParameterName(OauthParameterRedirectUri)
+	OidcParameterResponseType     OidcParameterName = OidcParameterName(OauthParameterResponseType)
+	OidcParameterScope            OidcParameterName = OidcParameterName(OauthParameterScope)
+	OidcParameterState            OidcParameterName = OidcParameterName(OauthParameterState)
+	OidcParameterCode             OidcParameterName = OidcParameterName(OauthParameterCode)
+	OidcParameterError            OidcParameterName = OidcParameterName(OauthParameterError)
+	OidcParameterErrorDescription OidcParameterName = OidcParameterName(OauthParameterErrorDescription)
+	OidcParameterGrantType        OidcParameterName = OidcParameterName(OauthParameterGrantType)
+
 	OidcTokenMapKeyNickname OauthTokenMapKey = "nickname"
 	OidcTokenMapKeyEmail    OauthTokenMapKey = "email"
+	OidcTokenMapKeyGroups   OauthTokenMapKey = "groups"
 
 	OidcTokenTypeCode    OidcTokenType = OidcTokenType(OauthTokenTypeCode)
 	OidcTokenTypeAccess  OidcTokenType = OidcTokenType(OauthTokenTypeAccess)
@@ -56,5 +71,12 @@ var (
 		OidcHandlerPathNameValidate:  OidcHandlerPathValidate,
 		OidcHandlerPathNameDiscovery: OidcHandlerPathDiscovery,
 		OidcHandlerPathNameJwks:      OidcHandlerPathJwks,
+	}
+
+	OidcTokenUserProfileMap = map[string]string{
+		string(crypto.TokenHeaderMapKeySubject): UserProfileName,
+		string(OidcTokenMapKeyNickname):         UserProfileName,
+		string(OidcTokenMapKeyEmail):            UserProfileMail,
+		string(OidcTokenMapKeyGroups):           UserProfileGroups,
 	}
 )

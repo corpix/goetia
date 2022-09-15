@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/itchyny/gojq"
+
 	"github.com/corpix/gdk/crypto"
 	"github.com/corpix/gdk/di"
 	"github.com/corpix/gdk/errors"
@@ -15,12 +17,29 @@ import (
 type (
 	ProviderOidcConfig struct {
 		*ProviderOauthConfig `yaml:",inline"`
+		Applications         map[string]*ProviderOidcApplicationConfig `yaml:"applications"`
 	}
-	ProviderOidcApplicationConfig = ProviderOauthApplicationConfig
-	ProviderOidcApplication       = ProviderOauthApplication
-	ProviderOidc                  struct {
+	ProviderOidcApplicationConfig struct {
+		*ProviderOauthApplicationConfig `yaml:",inline"`
+
+		Profile *ProviderOidcApplicationProfileConfig `yaml:"profile"`
+	}
+	ProviderOidcApplicationProfileConfig struct {
+		*ProviderOauthApplicationProfileConfig `yaml:",inline"`
+
+		TokenMap    map[string]string `yaml:"token-map"`
+		TokenExpand string            `yaml:"token-expand"`
+	}
+	ProviderOidcApplication struct {
+		*ProviderOauthApplication
+		Config *ProviderOidcApplicationConfig
+
+		tokenProfileExpandExpr *gojq.Query
+	}
+	ProviderOidc struct {
 		*ProviderOauth
-		Jwks crypto.TokenJwtKeySet
+		Applications map[string]*ProviderOidcApplication
+		Jwks         crypto.TokenJwtKeySet
 	}
 	ProviderOidcDiscovery struct {
 		Issuer                            string   `json:"issuer,omitempty"`
@@ -74,20 +93,69 @@ func (c *ProviderOidcConfig) Validate() error {
 	return nil
 }
 
+func (c *ProviderOidcApplicationConfig) Default() {
+	if c.ProviderOauthApplicationConfig == nil {
+		c.ProviderOauthApplicationConfig = &ProviderOauthApplicationConfig{}
+	}
+	if c.Profile == nil {
+		c.Profile = &ProviderOidcApplicationProfileConfig{}
+	}
+}
+
+func (c *ProviderOidcApplicationProfileConfig) Default() {
+	if c.ProviderOauthApplicationProfileConfig == nil {
+		c.ProviderOauthApplicationProfileConfig = &ProviderOauthApplicationProfileConfig{}
+	}
+
+	if c.TokenMap == nil {
+		c.TokenMap = map[string]string{}
+	}
+
+	for tokenKey, profileKey := range OidcTokenUserProfileMap {
+		_, ok := c.TokenMap[tokenKey]
+		if !ok {
+			c.TokenMap[tokenKey] = profileKey
+		}
+	}
+}
+
+func (a *ProviderOidcApplication) TokenUserProfileExpandRemap(profile *UserProfile) map[string]interface{} {
+	m := profile.Map()
+	rm := UserProfileRemap(m, a.Config.Profile.TokenMap)
+	if a.tokenProfileExpandExpr == nil {
+		return rm
+	}
+	return UserProfileExpand(rm, a.tokenProfileExpandExpr)
+}
+
 //
+
+func (c *ProviderOidc) ApplicationById(id string) (*ProviderOidcApplication, error) {
+	app, ok := c.Applications[id]
+	if !ok {
+		return nil, errors.Errorf("application with id %q does not exists", id)
+	}
+	return app, nil
+}
+
+func (c *ProviderOidc) Application(kv KeyValue) (*ProviderOidcApplication, error) {
+	return c.ApplicationById(kv.Get(string(OidcParameterClientId)))
+}
 
 func (c *ProviderOidc) Path(name OidcHandlerPathName) string {
 	return string(c.Config.Paths[OauthHandlerPathName(name)])
 }
 
-func (c *ProviderOidc) Token(discover *ProviderOidcDiscovery, profile *UserProfile, sessionId []byte, app *ProviderOauthApplication) *OidcTokenResponse {
-	oauthTokenResp := c.ProviderOauth.Token(sessionId, app)
+func (c *ProviderOidc) Token(discover *ProviderOidcDiscovery, profile *UserProfile, sessionId []byte, app *ProviderOidcApplication) *OidcTokenResponse {
+	oauthTokenResp := c.ProviderOauth.Token(sessionId, app.ProviderOauthApplication)
 	idToken := c.TokenService.New(OauthTokenType(OidcTokenTypeId))
 	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, []string{app.Id()})
 	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeyIssuer, discover.Issuer)
-	idToken.Header.Meta.Set(crypto.TokenHeaderMapKeySubject, profile.Name)
-	idToken.Header.Meta.Set(OidcTokenMapKeyNickname, profile.Name)
-	idToken.Header.Meta.Set(OidcTokenMapKeyEmail, profile.Mail)
+
+	for k, v := range app.TokenUserProfileExpandRemap(profile) {
+		idToken.Header.Meta.Set(crypto.TokenMapKey(k), v)
+	}
+
 	idTokenBytes := c.TokenService.MustEncode(OauthTokenType(OidcTokenTypeId), idToken)
 
 	return &OidcTokenResponse{
@@ -162,7 +230,16 @@ func (c *ProviderOidc) Mount(router *http.Router) {
 
 		router.
 			HandleFunc(c.Path(OidcHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
-				sessionId, app := c.CodeLoad(r)
+				code := c.Code(r)
+				sessionId, err := c.GetSessionId(code)
+				if err != nil {
+					panic(err)
+				}
+				app, err := c.ApplicationById(code.MustGetString(OauthTokenMapKeyApplicationId))
+				if err != nil {
+					panic(err)
+				}
+
 				session, err := sessionService.Store.Load(sessionId)
 				if err != nil {
 					panic(err)
@@ -226,14 +303,29 @@ func NewProviderOidc(c *ProviderOidcConfig) *ProviderOidc {
 
 	provider := &ProviderOidc{
 		ProviderOauth: oauthProvider,
+		Applications:  map[string]*ProviderOidcApplication{},
 		Jwks:          crypto.TokenJwtKeySet{Keys: tokenKeys},
+	}
+	for name, conf := range c.Applications {
+		provider.Applications[name] = NewProviderOidcApplication(name, conf)
 	}
 	return provider
 }
 
-func NewProviderOidcApplication(name string, c *ProviderOidcApplicationConfig) *ProviderOidcApplication {
+func NewProviderOidcApplication(id string, c *ProviderOidcApplicationConfig) *ProviderOidcApplication {
+	var (
+		tokenProfileExpandExpr *gojq.Query
+		err                    error
+	)
+	if c.Profile.TokenExpand != "" {
+		tokenProfileExpandExpr, err = gojq.Parse(c.Profile.TokenExpand)
+		if err != nil {
+			panic(err)
+		}
+	}
 	return &ProviderOidcApplication{
-		id:     name,
-		Config: c,
+		ProviderOauthApplication: NewProviderOauthApplication(id, c.ProviderOauthApplicationConfig),
+		Config:                   c,
+		tokenProfileExpandExpr:   tokenProfileExpandExpr,
 	}
 }

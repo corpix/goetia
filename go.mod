@@ -10,7 +10,7 @@ require (
 	github.com/itchyny/gojq v0.12.9
 )
 
-replace gopkg.in/yaml.v2 v2.4.0 => github.com/corpix/yaml v0.0.0-20220706182535-91862f77ddd0
+replace gopkg.in/yaml.v2 v2.4.0 => github.com/corpix/yaml v0.0.0-20220915223554-1dedc5fdfc2b
 
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect

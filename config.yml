@@ -190,7 +190,5 @@ proxy:
               display-name: "name"
               mail: "email"
               name: "login"
-            expand: >-
-              .groups = (.groups | split(","))
       paths:
         discovery: /discover

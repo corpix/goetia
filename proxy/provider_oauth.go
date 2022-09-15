@@ -177,11 +177,11 @@ func (a *ProviderOauthApplication) Label() string {
 	return a.Config.Label
 }
 
-func (a *ProviderOauthApplication) RediretUri() *url.URL {
+func (a *ProviderOauthApplication) RedirectUri() *url.URL {
 	return a.Config.redirectUri
 }
 
-func (a *ProviderOauthApplication) UserProfileExpandRemap(profile *UserProfile) interface{} {
+func (a *ProviderOauthApplication) UserProfileExpandRemap(profile *UserProfile) map[string]interface{} {
 	m := profile.Map()
 	rm := UserProfileRemap(m, a.Config.Profile.Map)
 	if a.profileExpandExpr == nil {
@@ -266,7 +266,7 @@ func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http
 
 	rq := r.URL.Query()
 	requestedRedirectUri := rq.Get(string(OauthParameterRedirectUri))
-	configuredRedirectUri := app.RediretUri().String()
+	configuredRedirectUri := app.RedirectUri().String()
 	if requestedRedirectUri != configuredRedirectUri {
 		panic(errors.Errorf(
 			"application %q requested redirect uri %q does not match configured %q",
@@ -288,7 +288,7 @@ func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http
 
 	//
 
-	u := *app.RediretUri()
+	u := *app.RedirectUri()
 	q := u.Query()
 	if state := rq.Get(string(OauthParameterState)); state != "" {
 		// TODO: should we yell on the empty state query param?
@@ -300,44 +300,33 @@ func (c *ProviderOauth) CodeUrl(sessionId []byte, w http.ResponseWriter, r *http
 	return &u
 }
 
-func (c *ProviderOauth) CodeLoad(r *http.Request) ([]byte, *ProviderOauthApplication) {
-  err := r.ParseForm()
+func (c *ProviderOauth) Code(r *http.Request) *OauthToken {
+	err := r.ParseForm()
 	if err != nil {
 		panic(err)
 	}
-
-	//
 
 	code, err := c.GetToken(OauthTokenTypeCode, []byte(r.Form.Get(string(OauthParameterCode))))
 	if err != nil {
 		panic(err)
 	}
-	sessionId, err := c.GetSessionId(code)
-	if err != nil {
-		panic(err)
-	}
-	app, err := c.ApplicationById(code.MustGetString(OauthTokenMapKeyApplicationId))
-	if err != nil {
-		panic(err)
-	}
-
-  return sessionId, app
+	return code
 }
 
 func (c *ProviderOauth) Token(sessionId []byte, app *ProviderOauthApplication) *OauthTokenResponse {
-  appId := app.Id()
-  audience := []string{appId}
+	appId := app.Id()
+	audience := []string{appId}
 
 	//
 
 	accessToken := c.TokenService.New(OauthTokenTypeAccess)
-  accessToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
+	accessToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
 	accessToken.Set(OauthTokenMapKeyApplicationId, appId)
 	accessToken.Set(OauthTokenMapKeySessionId, string(sessionId))
 	accessTokenBytes := c.TokenService.MustEncode(OauthTokenTypeAccess, accessToken)
 
 	refreshToken := c.TokenService.New(OauthTokenTypeRefresh)
-  refreshToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
+	refreshToken.Header.Meta.Set(crypto.TokenHeaderMapKeyAudience, audience)
 	refreshToken.Set(OauthTokenMapKeyApplicationId, appId)
 	refreshToken.Set(OauthTokenMapKeySessionId, string(sessionId))
 	refreshTokenBytes := c.TokenService.MustEncode(OauthTokenTypeRefresh, refreshToken)
@@ -413,7 +402,16 @@ func (c *ProviderOauth) Mount(router *http.Router) {
 
 		router.
 			HandleFunc(c.Path(OauthHandlerPathNameToken), func(w http.ResponseWriter, r *http.Request) {
-        sessionId, app := c.CodeLoad(r)
+				code := c.Code(r)
+				sessionId, err := c.GetSessionId(code)
+				if err != nil {
+					panic(err)
+				}
+				app, err := c.ApplicationById(code.MustGetString(OauthTokenMapKeyApplicationId))
+				if err != nil {
+					panic(err)
+				}
+
 				resBytes, err := json.Marshal(c.Token(sessionId, app))
 				if err != nil {
 					panic(err)

@@ -10,7 +10,11 @@
         <table class="stripped">
           <tbody>
             {{range $k := $userProfileMapKeys}}
-            {{$v := get $userProfileMap $k}}
+            {{$rv := get $userProfileMap $k}}
+            {{$v := $rv}}
+            {{if and $rv (eq (printf "%T" $rv) "[]string")}}
+            {{$v = join ", " $rv}}
+            {{end}}
             <tr>
               <td>{{$k}}</td>
               <td style="text-overflow: ellipsis;">{{if $v}}
