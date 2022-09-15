@@ -12,7 +12,7 @@ make this behaviour configurable
 * DONE oauth2 per-application profile remap rules
 * DONE oauth2 provider
 basic oauth2 flow to allow other applications to authenticate against goetia
-* TODO test oauth2 provider with goth client
+* DONE test oauth2 provider with goth client
 need an automated test so we could test at most some parts of the flow (authorize -> code -> access token -> profile)
 * TODO more granular error codes
 we can send 500 http code for each error, but want to have 400 and other as well
@@ -60,10 +60,6 @@ not sure we need this, but this was a feature we have in the past, why not suppo
 * TODO slack refresh tokens
   have no clue how the fuck it should be implemented, docs are outdated and unclear
 
-* TODO implement identity provider
-  - [~] OAuth2
-  - [ ] SAML
-
 * TODO a way to run connector code on signout
 signout for basic auth is not consistent
 (you sould sign in after sign out without entering a password)
@@ -86,7 +82,7 @@ regarding =display-name=: for some reason it doesnt like =-= in key.
 9:58PM WRN csrf token validation failed error="csrf token nonce does not match the expected nonce" expected-nonce=1287580923372519936 method=POST request-id=15aafedc-b6a4-4cf4-8b94-58d3bce8cf43 token={"header":{"valid-after":"2022-09-11T21:58:44.142865013Z","valid-before":"2022-09-12T21:58:44.142865013Z"},"payload":{"nonce":1287580923372519852,"path":"/auth/connectors/basic/"}} token-nonce=1287580923372519852 url=/auth/connectors/basic/
 #+end_src
 
-* TODO implement =id_token=
+* DONE implement =id_token=
 OIDC (and gitea) requires this token to contain user information, not sure how it's signature qill be matched agains jwks, will see
 * TODO create telegram connector
 sign in with telegram, but not using telegram's oauth:
@@ -99,5 +95,5 @@ sign in with telegram, but not using telegram's oauth:
 
 polling should be enough on start (progressive interval degradation after 60s may be a smart move)
 
-** TODO gdk generalized token service
+** DONE gdk generalized token service
 required to created minimal signed strings
