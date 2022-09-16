@@ -78,6 +78,7 @@ func (c *ConnectorBasicUserConfig) Expand() error {
 	} else {
 		c.password = c.Password
 	}
+	c.password = strings.TrimRight(c.password, "\n")
 	return nil
 }
 
