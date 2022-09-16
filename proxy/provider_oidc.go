@@ -121,7 +121,7 @@ func (c *ProviderOidcApplicationProfileConfig) Default() {
 
 func (a *ProviderOidcApplication) TokenUserProfileExpandRemap(profile *UserProfile) map[string]interface{} {
 	m := profile.Map()
-	rm := UserProfileRemap(m, a.Config.Profile.TokenMap)
+	rm := UserProfileMapReversed(m, a.Config.Profile.TokenMap)
 	if a.tokenProfileExpandExpr == nil {
 		return rm
 	}

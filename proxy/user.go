@@ -144,6 +144,38 @@ func (p *UserProfile) Map() map[string]interface{} {
 	}
 }
 
+func UserProfileMap(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
+  var (
+    v interface{}
+    ok bool
+    mapped = make(map[string]interface{}, len(mapping))
+	)
+	for from, to := range mapping {
+    v, ok = profile[from]
+    if !ok {
+      continue
+    }
+    mapped[to] = v
+	}
+	return mapped
+}
+
+func UserProfileMapReversed(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
+  var (
+    v interface{}
+    ok bool
+    mapped = make(map[string]interface{}, len(mapping))
+	)
+	for to, from := range mapping {
+    v, ok = profile[from]
+    if !ok {
+      continue
+    }
+    mapped[to] = v
+	}
+	return mapped
+}
+
 func UserProfileRemap(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
 	var (
 		key      string
