@@ -44,6 +44,21 @@ type (
 	}
 )
 
+func (c *UserConfig) Default() {
+  if c.Profile == nil {
+    c.Profile = &UserProfileConfig{}
+  }
+  if c.Retpath == nil {
+    c.Retpath = &UserRetpathConfig{}
+  }
+}
+
+func (c *UserProfileConfig) Default() {
+  if c.Headers == nil {
+    c.Headers = &UserProfileHeadersConfig{}
+  }
+}
+
 const (
 	UserProfileConnector   = "connector"
 	UserProfileName        = "name"
