@@ -125,9 +125,9 @@ func (p Paths) TemplateContext() TemplateContext {
 }
 
 func NewPaths(prefix string) Paths {
-  if prefix == "/" {
-    prefix = ""
-  }
+	if prefix == "/" {
+		prefix = ""
+	}
 	return Paths{
 		PathNameRoot:       prefix + PathRoot,
 		PathNameConnectors: prefix + PathConnectors,

@@ -45,18 +45,18 @@ type (
 )
 
 func (c *UserConfig) Default() {
-  if c.Profile == nil {
-    c.Profile = &UserProfileConfig{}
-  }
-  if c.Retpath == nil {
-    c.Retpath = &UserRetpathConfig{}
-  }
+	if c.Profile == nil {
+		c.Profile = &UserProfileConfig{}
+	}
+	if c.Retpath == nil {
+		c.Retpath = &UserRetpathConfig{}
+	}
 }
 
 func (c *UserProfileConfig) Default() {
-  if c.Headers == nil {
-    c.Headers = &UserProfileHeadersConfig{}
-  }
+	if c.Headers == nil {
+		c.Headers = &UserProfileHeadersConfig{}
+	}
 }
 
 const (
@@ -145,33 +145,33 @@ func (p *UserProfile) Map() map[string]interface{} {
 }
 
 func UserProfileMap(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
-  var (
-    v interface{}
-    ok bool
-    mapped = make(map[string]interface{}, len(mapping))
+	var (
+		v      interface{}
+		ok     bool
+		mapped = make(map[string]interface{}, len(mapping))
 	)
 	for from, to := range mapping {
-    v, ok = profile[from]
-    if !ok {
-      continue
-    }
-    mapped[to] = v
+		v, ok = profile[from]
+		if !ok {
+			continue
+		}
+		mapped[to] = v
 	}
 	return mapped
 }
 
 func UserProfileMapReversed(profile map[string]interface{}, mapping map[string]string) map[string]interface{} {
-  var (
-    v interface{}
-    ok bool
-    mapped = make(map[string]interface{}, len(mapping))
+	var (
+		v      interface{}
+		ok     bool
+		mapped = make(map[string]interface{}, len(mapping))
 	)
 	for to, from := range mapping {
-    v, ok = profile[from]
-    if !ok {
-      continue
-    }
-    mapped[to] = v
+		v, ok = profile[from]
+		if !ok {
+			continue
+		}
+		mapped[to] = v
 	}
 	return mapped
 }
