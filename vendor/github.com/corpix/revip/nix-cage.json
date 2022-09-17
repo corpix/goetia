@@ -1,0 +1,21 @@
+{
+    "mounts": {
+        "rw": [
+            ".", "~/.emacs.d",
+	    ["./.cache",  "~/.cache", "d"],
+	    ["./.config", "~/.config", "d"],
+	    ["./.local",  "~/.local", "d"],
+            "/run"
+        ],
+        "ro": [
+            "~/.gitconfig",
+            "/"
+        ],
+        "dev": ["/dev"],
+        "tmpfs": [
+            "/tmp",
+            "/home",
+            "~"
+        ]
+    }
+}

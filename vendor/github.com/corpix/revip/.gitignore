@@ -1,0 +1,6 @@
+.personal.*
+/main
+/.env
+/.cache/*
+/.config/*
+/.local/*
