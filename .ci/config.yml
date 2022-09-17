@@ -1,0 +1,14 @@
+version: v0
+
+runs:
+  - name: go test
+    tasks:
+      - name: run
+        runtime:
+          containers:
+            - image: nixos/nix:2.11.1
+        steps:
+          - clone: {}
+          - run: nix-shell --run 'make test'
+          - run: nix-shell --run 'make lint'
+          - run: nix-shell --run '[ $(go fmt ./... | wc -l) = 0 ]'
