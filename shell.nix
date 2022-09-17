@@ -1,10 +1,15 @@
 let
+  inherit (builtins)
+    fetchTarball
+  ;
   inherit (pkgs)
     writeScript
     stdenv
   ;
 
-  nixpkgs = <nixpkgs>;
+  nixpkgs = fetchTarball {
+    url = "http://git.pluto.backbone/corpix/nixpkgs/archive/corpix.tar.gz";
+  };
   config = {};
   pkgs = import nixpkgs { inherit config; };
 
