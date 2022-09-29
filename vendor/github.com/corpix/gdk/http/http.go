@@ -26,9 +26,9 @@ type (
 		Template         *template.Config        `yaml:"template"`
 	}
 	Http struct {
-		Config  *Config
-		Address string
-		Router  *Router
+		Config       *Config
+		Address      string
+		Router       *Router
 	}
 	Option         func(*Http)
 	Handler        = http.Handler

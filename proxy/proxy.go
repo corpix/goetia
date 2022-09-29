@@ -106,6 +106,31 @@ var (
 	ErrAuthorizationRequired = errors.New("authorization required")
 )
 
+func MustProvide() {
+	di.MustProvide(di.Default, func() []http.ProxyOption {
+		var paths Paths
+		return []http.ProxyOption{
+			http.WithProxyPredicate(func(h *http.Http, w http.ResponseWriter, r *http.Request) bool {
+				if paths == nil {
+					di.MustInvoke(di.Default, func(p Paths) { paths = p })
+				}
+
+				session := http.RequestSessionMustGet(r)
+				profile := SessionUserProfileGet(session)
+				if profile == nil {
+					http.Redirect(
+						w, r,
+						paths[PathNameSignin],
+						http.StatusTemporaryRedirect,
+					)
+					return false
+				}
+				return true
+			}),
+		}
+	})
+}
+
 //
 
 func (p Paths) TemplateContext() TemplateContext {
@@ -197,9 +222,9 @@ func (c *ProvidersConfig) Validate() error {
 }
 
 func NewConnectors(c *ConnectorsConfig) []Connector {
-  if c == nil {
-    return nil
-  }
+	if c == nil {
+		return nil
+	}
 
 	connectors := make([]Connector, len(c.Enable))
 	for n, name := range c.Enable {
@@ -216,9 +241,9 @@ func NewConnectors(c *ConnectorsConfig) []Connector {
 }
 
 func NewProviders(c *ProvidersConfig) []Provider {
-  if c == nil {
-    return nil
-  }
+	if c == nil {
+		return nil
+	}
 
 	providers := make([]Provider, len(c.Enable))
 	for n, name := range c.Enable {

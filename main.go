@@ -13,6 +13,7 @@ import (
 var conf = &app.Config{}
 
 func main() {
+	proxy.MustProvide()
 	di.MustProvide(di.Default, proxy.ErrorHandlerCtr)
 
 	cli.New(

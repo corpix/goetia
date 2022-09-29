@@ -18,7 +18,7 @@ http:
     # validator:
     #   refresh: 5s
   proxy:
-    enable: false
+    enable: true
     upstreams:
       default: "http://127.0.0.1:8082"
   csrf:

@@ -19,8 +19,9 @@ type (
 		Locations map[string]struct{} `yaml:"locations"`
 	}
 	Proxy struct {
-		Config   *ProxyConfig
-		Balancer ProxyBalancer
+		Config    *ProxyConfig
+		Balancer  ProxyBalancer
+		Predicate func(*Http, ResponseWriter, *Request) bool
 	}
 	ProxyOption func(*Proxy)
 
@@ -98,16 +99,31 @@ func (b *ProxyBalancerRoundRobin) Dispatch(r *Request) *ReverseProxy {
 	return b.UpstreamProxies[b.State%uint32(len(b.Upstreams))]
 }
 
+//
+
 func WithProxy(c *ProxyConfig, options ...ProxyOption) Option {
 	p := NewProxy(c, options...)
 	return func(h *Http) {
 		for location := range c.Locations {
 			h.Router.HandleFunc(location, func(w ResponseWriter, r *Request) {
+				if p.Predicate != nil {
+					if !p.Predicate(h, w, r) {
+						return
+					}
+				}
 				p.Balancer.Dispatch(r).ServeHTTP(w, r)
 			})
 		}
 	}
 }
+
+func WithProxyPredicate(pred func(*Http, ResponseWriter, *Request) bool) ProxyOption {
+	return func(p *Proxy) {
+		p.Predicate = pred
+	}
+}
+
+//
 
 func NewProxy(c *ProxyConfig, options ...ProxyOption) *Proxy {
 	upstreams := make([]*ProxyUpstream, len(c.Upstreams))
