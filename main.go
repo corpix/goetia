@@ -32,16 +32,3 @@ func main() {
 		),
 	).RunAndExitOnError()
 }
-
-//
-
-/*
-   context keys:
-   - requestId (current req id)
-   - container (document content container)
-   - error (error message)
-   - session *user session
-   - connectors, providers (list of enabled connectors, providers)
-   - paths (goetia pages for routing)
-   - user (user profile + any other information about user, like provider)
-*/
