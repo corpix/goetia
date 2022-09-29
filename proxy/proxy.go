@@ -22,12 +22,10 @@ type (
 	Paths    map[PathName]string
 
 	ConnectorsConfig struct {
-		Enable []string `yaml:"enable"`
-		// Slack  *ConnectorSlackConfig  `yaml:"slack"`
-		// Oidc   *ConnectorOidcConfig   `yaml:"oidc"`
+		Enable   []string                 `yaml:"enable"`
 		Basic    *ConnectorBasicConfig    `yaml:"basic"`
+		Oauth    *ConnectorOauthConfig    `yaml:"oauth"`
 		Telegram *ConnectorTelegramConfig `yaml:"telegram"`
-		// Bypass *ConnectorBypassConfig `yaml:"bypass"`
 	}
 	ConnectorConfig struct {
 		Name        string `yaml:"name"`
@@ -78,11 +76,9 @@ const (
 	PathAuthorize  = "/authorize"
 	PathStatus     = "/status"
 
-	// ConnectorNameSlack  ConnectorName = "slack"
-	// ConnectorNameOidc   ConnectorName = "oidc"
 	ConnectorNameBasic    ConnectorName = "basic"
+	ConnectorNameOauth    ConnectorName = "oauth"
 	ConnectorNameTelegram ConnectorName = "telegram"
-	// ConnectorNameBypass ConnectorName = "bypass"
 
 	ProviderNameOauth ProviderName = "oauth"
 	ProviderNameOidc  ProviderName = "oidc"
@@ -90,18 +86,14 @@ const (
 
 var (
 	ConnectorNames = map[string]struct{}{
-		// string(ConnectorNameSlack):  {},
-		// string(ConnectorNameOidc):   {},
 		string(ConnectorNameBasic):    {},
+		string(ConnectorNameOauth):    {},
 		string(ConnectorNameTelegram): {},
-		// string(ConnectorNameBypass): {},
 	}
 
-	// _ Connector = &ConnectorSlack{}
-	// _ Connector = &ConnectorOidc{}
 	_ Connector = &ConnectorBasic{}
+	_ Connector = &ConnectorOauth{}
 	_ Connector = &ConnectorTelegram{}
-	// _ Connector = &ConnectorBypass{}
 
 	ProviderNames = map[string]struct{}{
 		string(ProviderNameOauth): {},
@@ -147,21 +139,15 @@ func (c *ConnectorsConfig) Default() {
 		enabled[ConnectorName(strings.ToLower(k))] = true
 	}
 
-	// if c.Slack == nil && enabled[ConenctorNameSlack] {
-	// 	c.Slack = &ConnectorSlackConfig{}
-	// }
-	// if c.Oidc == nil && enabled[ConnectorNameOidc] {
-	// 	c.Oidc = &ConnectorOidcConfig{}
-	// }
 	if c.Basic == nil && enabled[ConnectorNameBasic] {
 		c.Basic = &ConnectorBasicConfig{}
+	}
+	if c.Oauth == nil && enabled[ConnectorNameOauth] {
+		c.Oauth = &ConnectorOauthConfig{}
 	}
 	if c.Telegram == nil && enabled[ConnectorNameTelegram] {
 		c.Telegram = &ConnectorTelegramConfig{}
 	}
-	// if c.Bypass == nil && enabled[ConnectorNameBypass] {
-	// 	c.Bypass = &ConnectorBypassConfig{}
-	// }
 }
 
 func (c *ConnectorsConfig) Validate() error {
@@ -214,13 +200,12 @@ func NewConnectors(c *ConnectorsConfig) []Connector {
 	connectors := make([]Connector, len(c.Enable))
 	for n, name := range c.Enable {
 		switch ConnectorName(name) {
-		// case ConnectorNameSlack:
-		// case ConnectorNameOidc:
 		case ConnectorNameBasic:
 			connectors[n] = NewConnectorBasic(c.Basic)
+		case ConnectorNameOauth:
+			connectors[n] = NewConnectorOauth(c.Oauth)
 		case ConnectorNameTelegram:
 			connectors[n] = NewConnectorTelegram(c.Telegram)
-			// case ConnectorNameBypass:
 		}
 	}
 	return connectors

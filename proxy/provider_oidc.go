@@ -27,14 +27,14 @@ type (
 	ProviderOidcApplicationProfileConfig struct {
 		*ProviderOauthApplicationProfileConfig `yaml:",inline"`
 
-		TokenMap    map[string]string `yaml:"token-map"`
-		TokenExpand string            `yaml:"token-expand"`
+		TokenMap        map[string]string `yaml:"token-map"`
+		TokenExpandExpr string            `yaml:"token-expand"`
+
+		tokenExpandExpr *gojq.Query
 	}
 	ProviderOidcApplication struct {
 		*ProviderOauthApplication
 		Config *ProviderOidcApplicationConfig
-
-		tokenProfileExpandExpr *gojq.Query
 	}
 	ProviderOidc struct {
 		*ProviderOauth
@@ -119,13 +119,24 @@ func (c *ProviderOidcApplicationProfileConfig) Default() {
 	}
 }
 
+func (c *ProviderOidcApplicationProfileConfig) Expand() error {
+	if c.TokenExpandExpr != "" {
+		expr, err := gojq.Parse(c.TokenExpandExpr)
+		if err != nil {
+			panic(err)
+		}
+		c.tokenExpandExpr = expr
+	}
+	return nil
+}
+
 func (a *ProviderOidcApplication) TokenUserProfileExpandRemap(profile *UserProfile) map[string]interface{} {
 	m := profile.Map()
 	rm := UserProfileMapReversed(m, a.Config.Profile.TokenMap)
-	if a.tokenProfileExpandExpr == nil {
+	if a.Config.Profile.tokenExpandExpr == nil {
 		return rm
 	}
-	return UserProfileExpand(rm, a.tokenProfileExpandExpr)
+	return UserProfileExpand(rm, a.Config.Profile.tokenExpandExpr)
 }
 
 //
@@ -313,19 +324,8 @@ func NewProviderOidc(c *ProviderOidcConfig) *ProviderOidc {
 }
 
 func NewProviderOidcApplication(id string, c *ProviderOidcApplicationConfig) *ProviderOidcApplication {
-	var (
-		tokenProfileExpandExpr *gojq.Query
-		err                    error
-	)
-	if c.Profile.TokenExpand != "" {
-		tokenProfileExpandExpr, err = gojq.Parse(c.Profile.TokenExpand)
-		if err != nil {
-			panic(err)
-		}
-	}
 	return &ProviderOidcApplication{
 		ProviderOauthApplication: NewProviderOauthApplication(id, c.ProviderOauthApplicationConfig),
 		Config:                   c,
-		tokenProfileExpandExpr:   tokenProfileExpandExpr,
 	}
 }

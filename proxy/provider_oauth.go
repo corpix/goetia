@@ -44,12 +44,13 @@ type (
 	ProviderOauthApplication struct {
 		Config *ProviderOauthApplicationConfig
 
-		id                string
-		profileExpandExpr *gojq.Query
+		id string
 	}
 	ProviderOauthApplicationProfileConfig struct {
-		Map    map[string]string `yaml:"map"`
-		Expand string            `yaml:"expand"`
+		Map        map[string]string `yaml:"map"`
+		ExpandExpr string            `yaml:"expand"`
+
+		expandExpr *gojq.Query
 	}
 )
 
@@ -167,6 +168,17 @@ func (c *ProviderOauthApplicationProfileConfig) Default() {
 	}
 }
 
+func (c *ProviderOauthApplicationProfileConfig) Expand() error {
+	if c.ExpandExpr != "" {
+		expr, err := gojq.Parse(c.ExpandExpr)
+		if err != nil {
+			return err
+		}
+		c.expandExpr = expr
+	}
+	return nil
+}
+
 //
 
 func (a *ProviderOauthApplication) Id() string {
@@ -184,10 +196,10 @@ func (a *ProviderOauthApplication) RedirectUri() *url.URL {
 func (a *ProviderOauthApplication) UserProfileExpandRemap(profile *UserProfile) map[string]interface{} {
 	m := profile.Map()
 	rm := UserProfileRemap(m, a.Config.Profile.Map)
-	if a.profileExpandExpr == nil {
+	if a.Config.Profile.expandExpr == nil {
 		return rm
 	}
-	return UserProfileExpand(rm, a.profileExpandExpr)
+	return UserProfileExpand(rm, a.Config.Profile.expandExpr)
 }
 
 //
@@ -493,20 +505,8 @@ func NewProviderOauth(c *ProviderOauthConfig) *ProviderOauth {
 }
 
 func NewProviderOauthApplication(id string, c *ProviderOauthApplicationConfig) *ProviderOauthApplication {
-	var (
-		profileExpandExpr *gojq.Query
-		err               error
-	)
-	if c.Profile.Expand != "" {
-		profileExpandExpr, err = gojq.Parse(c.Profile.Expand)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	return &ProviderOauthApplication{
-		Config:            c,
-		id:                id,
-		profileExpandExpr: profileExpandExpr,
+		Config: c,
+		id:     id,
 	}
 }

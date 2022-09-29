@@ -80,7 +80,7 @@ func (c *CsrfConfig) Default() {
 		c.Validator = &TokenValidatorConfig{}
 	}
 	c.Validator.Default()
-	c.Validator.Expire.Default()
+	c.Validator.Expire = &crypto.TokenValidatorExpireConfig{}
 	if c.Validator.Expire.MaxAge == nil {
 		dur := 2 * time.Hour
 		c.Validator.Expire.MaxAge = &dur

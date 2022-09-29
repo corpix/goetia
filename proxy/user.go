@@ -301,15 +301,18 @@ func SessionUserProfileGetOrRedirect(w http.ResponseWriter, r *http.Request, ses
 	return profile
 }
 
-func SessionUserProfileSet(session *http.Session, profile *UserProfile, rules ...Rule) {
-	m := profile.Map()
+func SessionUserProfileSetMap(session *http.Session, profile map[string]interface{}, rules ...Rule) {
 	if len(rules) > 0 {
-		err := RulesMatch(m, rules...)
+		err := RulesMatch(profile, rules...)
 		if err != nil {
 			panic(err)
 		}
 	}
-	session.Set(SessionMapKeyUserProfile, m)
+	session.Set(SessionMapKeyUserProfile, profile)
+}
+
+func SessionUserProfileSet(session *http.Session, profile *UserProfile, rules ...Rule) {
+	SessionUserProfileSetMap(session, profile.Map(), rules...)
 }
 
 func SessionUserProfileDel(session *http.Session) {

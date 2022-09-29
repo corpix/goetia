@@ -48,7 +48,7 @@ proxy:
           avatar-url: ""
 
   connectors:
-    enable: ["basic"]
+    enable: ["basic", "oauth"]
     # slack:
     #   oauth:
     #     client-id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -77,6 +77,17 @@ proxy:
           groups: ["admin", "owner"]
           display-name: "Dmitry Moskowski"
           avatar-url: "https://avatars.githubusercontent.com/u/747362"
+
+    oauth:
+      authorize-url: http://auth.pluto.backbone/providers/oidc/authorize
+      token-url: http://auth.pluto.backbone/providers/oidc/token
+      redirect-url: http://127.0.0.1:8080/auth/connectors/oauth/callback
+      profile-url: http://auth.pluto.backbone/providers/oidc/profile
+      client-id: test
+      state-token:
+        container:
+          secretbox:
+            key: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
     telegram:
       groups: [-647425492]

@@ -88,6 +88,10 @@ github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3Ee
 github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a h1:Rj1QD1zQKAJUww0ChFd7ITjXRKKI1Sqr0DREzHdXVdg=
 github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a/go.mod h1:p5qpvYboYzrVJwlMTMRuBDYySsKv0Qtf1FkBAyhPFBs=
+github.com/corpix/gdk v0.0.0-20220928225144-7fb500faecfe h1:KPDayEsz0GSuhLlLdpdG2UOl/K2L50+VoDxflUbLuT0=
+github.com/corpix/gdk v0.0.0-20220928225144-7fb500faecfe/go.mod h1:3ErC+vw2cpQuN0DzIAClG/u94s+S2o2fajWWFUWsiuU=
+github.com/corpix/gdk v0.0.0-20220928225350-1e7cb69223d2 h1:MlZDobEUHNg46B+Q7p9EMOO9zOFSPyBjYgVCHeo9Fu8=
+github.com/corpix/gdk v0.0.0-20220928225350-1e7cb69223d2/go.mod h1:3ErC+vw2cpQuN0DzIAClG/u94s+S2o2fajWWFUWsiuU=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867 h1:p8xl1k+w/dwWgVdpS3yfSTQd7u1YH0N8CHkwCKhF/wQ=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867/go.mod h1:HdU6GMWeMeXB9BvqVt4sLIZp/PinhYptn11vpA13URw=
 github.com/corpix/yaml v0.0.0-20220915223554-1dedc5fdfc2b h1:osXyZ7T9ydYGqDFVWeo6WmqKP8So4qFPir6oPRisE4Q=

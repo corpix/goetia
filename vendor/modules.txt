@@ -47,7 +47,7 @@ github.com/cockroachdb/redact/internal/markers
 github.com/cockroachdb/redact/internal/redact
 github.com/cockroachdb/redact/internal/rfmt
 github.com/cockroachdb/redact/internal/rfmt/fmtsort
-# github.com/corpix/gdk v0.0.0-20220914000456-5b51bca0ae4a
+# github.com/corpix/gdk v0.0.0-20220928225350-1e7cb69223d2
 ## explicit; go 1.18
 github.com/corpix/gdk/cli
 github.com/corpix/gdk/config

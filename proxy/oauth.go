@@ -67,6 +67,8 @@ const (
 	OauthTokenTypeCode    OauthTokenType = "code"
 	OauthTokenTypeAccess  OauthTokenType = "access"
 	OauthTokenTypeRefresh OauthTokenType = "refresh"
+
+	SessionMapKeyOauthStateNonce http.SessionMapKey = "oauth-state-nonce"
 )
 
 var (
