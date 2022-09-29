@@ -197,6 +197,10 @@ func (c *ProvidersConfig) Validate() error {
 }
 
 func NewConnectors(c *ConnectorsConfig) []Connector {
+  if c == nil {
+    return nil
+  }
+
 	connectors := make([]Connector, len(c.Enable))
 	for n, name := range c.Enable {
 		switch ConnectorName(name) {
@@ -212,6 +216,10 @@ func NewConnectors(c *ConnectorsConfig) []Connector {
 }
 
 func NewProviders(c *ProvidersConfig) []Provider {
+  if c == nil {
+    return nil
+  }
+
 	providers := make([]Provider, len(c.Enable))
 	for n, name := range c.Enable {
 		_ = n
