@@ -7,11 +7,8 @@ let
     stdenv
   ;
 
-  nixpkgs = fetchTarball {
-    url = "http://git.pluto.backbone/corpix/nixpkgs/archive/corpix.tar.gz";
-  };
   config = {};
-  pkgs = import nixpkgs { inherit config; };
+  pkgs = import <nixpkgs> { inherit config; };
 
   shellWrapper = writeScript "shell-wrapper" ''
     #! ${stdenv.shell}
@@ -34,7 +31,6 @@ in stdenv.mkDerivation rec {
     export root=$(pwd)
 
     export LANG="en_US.UTF-8"
-    export NIX_PATH="nixpkgs=${nixpkgs}"
 
     if [ -f .env ]
     then
