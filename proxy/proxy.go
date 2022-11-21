@@ -279,15 +279,16 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 		r = r.PathPrefix(conf.Prefix).Subrouter()
 	}
 
-	if conf.User.Profile.Headers.Enable {
-		headersService := NewUserProfileHeadersService(conf.User.Profile.Headers)
-		di.MustInvoke(di.Default, func(srv *http.SessionService) {
-			for path, _ := range srv.Config.SkipPaths {
-				headersService.SkipPaths(path)
-			}
-		})
-		di.MustProvide(di.Default, func() *UserProfileHeadersService { return headersService })
+	//
 
+	headersService := NewUserProfileHeadersService(conf.User.Profile.Headers)
+	di.MustInvoke(di.Default, func(srv *http.SessionService) {
+		for path, _ := range srv.Config.SkipPaths {
+			headersService.SkipPaths(path)
+		}
+	})
+	di.MustProvide(di.Default, func() *UserProfileHeadersService { return headersService })
+	if conf.User.Profile.Headers.Enable {
 		h.Router.Use(MiddlewareUserProfileHeaders(headersService))
 	}
 

@@ -40,7 +40,7 @@ proxy:
           key: "mail"
           expr: "^[^@]+@corpix\\.ru$"
       headers:
-        enable: true
+        enable: false
         map:
           # NOTE: empty value removes header from headers list
           connector: ""

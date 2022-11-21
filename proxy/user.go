@@ -87,9 +87,6 @@ var (
 //
 
 func (c *UserProfileHeadersConfig) Default() {
-	if !c.Enable {
-		return
-	}
 	if c.Map == nil {
 		c.Map = map[string]string{}
 	}
