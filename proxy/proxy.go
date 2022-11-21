@@ -367,12 +367,17 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 	r.
 		HandleFunc(PathStatus, func(w http.ResponseWriter, r *http.Request) {
 			session := http.RequestSessionMustGet(r)
+      profile := SessionUserProfileGet(session)
+      if profile == nil {
+        w.WriteHeader(http.StatusUnauthorized)
+      }
+
 			TemplateResponse(
 				t.Lookup(string(TemplateNameStatus)),
 				http.
 					NewTemplateContext(r).
 					With(TemplateContextKeySession, session).
-					With(TemplateContextKeyUserProfile, SessionUserProfileGet(session)).
+					With(TemplateContextKeyUserProfile, profile).
 					With(TemplateContextKeyPaths, templatePaths).
 					With(TemplateContextKeyConnectors, connectors).
 					With(TemplateContextKeyProviders, providers),
@@ -380,4 +385,12 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 			)
 		}).
 		Methods(http.MethodGet)
+
+	r.
+		HandleFunc(PathStatus, func(w http.ResponseWriter, r *http.Request) {
+			if SessionUserProfileGet(http.RequestSessionMustGet(r)) == nil {
+				w.WriteHeader(http.StatusUnauthorized)
+			}
+		}).
+		Methods(http.MethodHead)
 }
