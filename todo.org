@@ -97,3 +97,5 @@ polling should be enough on start (progressive interval degradation after 60s ma
 
 ** DONE gdk generalized token service
 required to created minimal signed strings
+* DONE fix metrics endpoint
+it requires session, should seed middleware which causes this with skip paths

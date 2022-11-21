@@ -281,7 +281,13 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 
 	if conf.User.Profile.Headers.Enable {
 		headersService := NewUserProfileHeadersService(conf.User.Profile.Headers)
+		di.MustInvoke(di.Default, func(srv *http.SessionService) {
+			for path, _ := range srv.Config.SkipPaths {
+				headersService.SkipPaths(path)
+			}
+		})
 		di.MustProvide(di.Default, func() *UserProfileHeadersService { return headersService })
+
 		h.Router.Use(MiddlewareUserProfileHeaders(headersService))
 	}
 
@@ -367,10 +373,10 @@ func Serve(conf *Config, h *http.Http, t *template.Template) {
 	r.
 		HandleFunc(PathStatus, func(w http.ResponseWriter, r *http.Request) {
 			session := http.RequestSessionMustGet(r)
-      profile := SessionUserProfileGet(session)
-      if profile == nil {
-        w.WriteHeader(http.StatusUnauthorized)
-      }
+			profile := SessionUserProfileGet(session)
+			if profile == nil {
+				w.WriteHeader(http.StatusUnauthorized)
+			}
 
 			TemplateResponse(
 				t.Lookup(string(TemplateNameStatus)),
