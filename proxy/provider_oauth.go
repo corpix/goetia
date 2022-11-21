@@ -128,9 +128,6 @@ func (c *ProviderOauthApplicationConfig) Validate() error {
 	if c.Key != "" && c.KeyFile != "" {
 		return errors.New("either key or key-file should be defined, not both")
 	}
-	if c.Key == "" && c.KeyFile == "" {
-		return errors.New("either key or key-file should be defined")
-	}
 	if c.RedirectUri == "" {
 		return errors.New("redirect-uri should not be empty")
 	}

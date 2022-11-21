@@ -124,7 +124,6 @@ proxy:
       applications:
         app:
           label: "test app"
-          key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
           profile:
             map:
@@ -189,7 +188,6 @@ proxy:
       applications:
         app:
           label: "test app"
-          key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           # grafana
           # redirect-uri: "http://127.0.0.1:3000/login/generic_oauth"
           # gitea
