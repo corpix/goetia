@@ -2,7 +2,7 @@ http:
   address: localhost:8080
   metrics:
     enable: true
-    #token: aaaaaaaa
+    token: aaaaaaaa
   session:
     enable: true
     # store:

@@ -3,7 +3,7 @@ module github.com/corpix/goetia
 go 1.18
 
 require (
-	github.com/corpix/gdk v0.0.0-20220929013331-372ad938da9c
+	github.com/corpix/gdk v0.0.0-20221121200657-e44a0a350622
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-pkgz/expirable-cache/v2 v2.0.0
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1

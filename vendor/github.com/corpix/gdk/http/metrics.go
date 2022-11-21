@@ -169,19 +169,32 @@ func WithMetricsHandler(registry metrics.RegisterGatherer) Option {
 
 			handler = rawHandler
 		} else {
-			subjectAuthorization := h.Config.Metrics.AuthType + " " + token
 			handler = HandlerFunc(func(w ResponseWriter, r *Request) {
-				clientAuthorization := r.Header.Get(HeaderAuthorization)
+				var (
+					reason string
+					auth   = strings.SplitN(r.Header.Get(HeaderAuthorization), " ", 2)
+				)
+				if len(auth) != 2 {
+					reason = "unexpected authentication header value format"
+					goto fail
+				}
+				if strings.ToLower(auth[0]) != h.Config.Metrics.AuthType {
+					reason = "unexpected authentication token type"
+					goto fail
+				}
+
 				if subtle.ConstantTimeCompare(
-					[]byte(subjectAuthorization),
-					[]byte(clientAuthorization),
+					[]byte(token),
+					[]byte(auth[1]),
 				) == 1 {
 					rawHandler.ServeHTTP(w, r)
 					return
 				}
+				reason = "token does not match"
 
+			fail:
 				l := RequestLogGet(r)
-				l.Warn().Msg("authentication failed, token does not match")
+				l.Warn().Msg("authentication failed, " + reason)
 
 				w.WriteHeader(StatusNotFound)
 			})

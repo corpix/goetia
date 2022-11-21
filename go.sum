@@ -100,6 +100,8 @@ github.com/corpix/gdk v0.0.0-20220929012747-cb26bf98ebdb h1:PTxY+X7oIzG1zBXShm1f
 github.com/corpix/gdk v0.0.0-20220929012747-cb26bf98ebdb/go.mod h1:3ErC+vw2cpQuN0DzIAClG/u94s+S2o2fajWWFUWsiuU=
 github.com/corpix/gdk v0.0.0-20220929013331-372ad938da9c h1:2c4ut2Y+6z1Cu7mml/rME44wwDVVrcQ0pzedF6/OGoc=
 github.com/corpix/gdk v0.0.0-20220929013331-372ad938da9c/go.mod h1:3ErC+vw2cpQuN0DzIAClG/u94s+S2o2fajWWFUWsiuU=
+github.com/corpix/gdk v0.0.0-20221121200657-e44a0a350622 h1:tmKYktgjz95pesqRyybVmGpCPXQ7b/MEfwKnRVelNbg=
+github.com/corpix/gdk v0.0.0-20221121200657-e44a0a350622/go.mod h1:3ErC+vw2cpQuN0DzIAClG/u94s+S2o2fajWWFUWsiuU=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867 h1:p8xl1k+w/dwWgVdpS3yfSTQd7u1YH0N8CHkwCKhF/wQ=
 github.com/corpix/revip v0.0.0-20220714000248-8a9ccb6e0867/go.mod h1:HdU6GMWeMeXB9BvqVt4sLIZp/PinhYptn11vpA13URw=
 github.com/corpix/yaml v0.0.0-20220915223554-1dedc5fdfc2b h1:osXyZ7T9ydYGqDFVWeo6WmqKP8So4qFPir6oPRisE4Q=
